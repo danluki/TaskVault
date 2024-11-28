@@ -11,7 +11,7 @@ import (
 
 var (
 	// projectURL is the project URL.
-	projectURL = "https://dkron.io/"
+	projectURL = "https://taskvault.io/"
 )
 
 type int64arr []int64
@@ -51,13 +51,13 @@ func (s *ServerParts) Copy() *ServerParts {
 
 // UserAgent returns the consistent user-agent string
 func UserAgent() string {
-	return fmt.Sprintf("Dkron/%s (+%s;)", Version, projectURL)
+	return fmt.Sprintf("taskvault/%s (+%s;)", Version, projectURL)
 }
 
-// IsServer Returns if a member is a Dkron server. Returns a boolean,
+// IsServer Returns if a member is a taskvault server. Returns a boolean,
 // and a struct with the various important components
 func isServer(m serf.Member) (bool, *ServerParts) {
-	if m.Tags["role"] != "dkron" {
+	if m.Tags["role"] != "taskvault" {
 		return false, nil
 	}
 

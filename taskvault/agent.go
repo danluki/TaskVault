@@ -81,12 +81,12 @@ type Agent struct {
 	shutdownCh  chan struct{}
 	retryJoinCh chan error
 
-	// The raft instance is used among Dkron nodes within the
+	// The raft instance is used among taskvault nodes within the
 	// region to protect operations that require strong consistency
 	leaderCh <-chan bool
 	raft     *raft.Raft
 	// raftLayer provides network layering of the raft RPC along with
-	// the Dkron gRPC transport layer.
+	// the taskvault gRPC transport layer.
 	raftLayer     *RaftLayer
 	raftStore     RaftStore
 	raftInmem     *raft.InmemStore
@@ -97,7 +97,7 @@ type Agent struct {
 	// join/leave from the region.
 	reconcileCh chan serf.Member
 
-	// peers is used to track the known Dkron servers. This is
+	// peers is used to track the known taskvault servers. This is
 	// used for region forwarding and clustering.
 	peers        map[string][]*ServerParts
 	localPeers   map[raft.ServerAddress]*ServerParts
@@ -201,7 +201,7 @@ func (a *Agent) RetryJoinCh() <-chan error {
 	return a.retryJoinCh
 }
 
-// JoinLAN is used to have Dkron join the inner-DC pool
+// JoinLAN is used to have taskvault join the inner-DC pool
 // The target address should be another node inside the DC
 // listening on the Serf LAN address
 func (a *Agent) JoinLAN(addrs []string) (int, error) {
@@ -338,7 +338,7 @@ func (a *Agent) setupRaft() error {
 			}
 			store, err := NewStore(a.logger)
 			if err != nil {
-				a.logger.WithError(err).Fatal("dkron: Error initializing store")
+				a.logger.WithError(err).Fatal("taskvault: Error initializing store")
 			}
 			tmpFsm := newFSM(store, a.logger)
 			if err := raft.RecoverCluster(config, tmpFsm,
@@ -418,7 +418,7 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	serfConfig.Init()
 
 	serfConfig.Tags = a.config.Tags
-	serfConfig.Tags["role"] = "dkron"
+	serfConfig.Tags["role"] = "taskvault"
 	serfConfig.Tags["dc"] = a.config.Datacenter
 	serfConfig.Tags["region"] = a.config.Region
 	serfConfig.Tags["version"] = Version
@@ -463,7 +463,7 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	serfConfig.EventCh = a.eventCh
 
 	// Start Serf
-	a.logger.Info("agent: Dkron agent starting")
+	a.logger.Info("agent: taskvault agent starting")
 
 	if a.logger.Logger.Level == logrus.DebugLevel {
 		serfConfig.LogOutput = a.logger.Logger.Writer()
@@ -492,12 +492,12 @@ func (a *Agent) SetConfig(c *Config) {
 	a.config = c
 }
 
-// StartServer launch a new dkron server process
+// StartServer launch a new taskvault server process
 func (a *Agent) StartServer() {
 	if a.Store == nil {
 		s, err := NewStore(a.logger)
 		if err != nil {
-			a.logger.WithError(err).Fatal("dkron: Error initializing store")
+			a.logger.WithError(err).Fatal("taskvault: Error initializing store")
 		}
 		a.Store = s
 	}

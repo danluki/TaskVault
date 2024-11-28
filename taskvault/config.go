@@ -21,7 +21,7 @@ type Config struct {
 	// NodeName is the name we register as. Defaults to hostname.
 	NodeName string `mapstructure:"node-name"`
 
-	// BindAddr is the address on which all of dkron's services will
+	// BindAddr is the address on which all of taskvault's services will
 	// be bound. If not specified, this defaults to the first private ip address.
 	BindAddr string `mapstructure:"bind-addr"`
 
@@ -44,7 +44,7 @@ type Config struct {
 	// EncryptKey is the secret key to use for encrypting communication
 	// traffic for Serf. The secret key must be exactly 32-bytes, base64
 	// encoded. The easiest way to do this on Unix machines is this command:
-	// "head -c32 /dev/urandom | base64" or use "dkron keygen". If this is
+	// "head -c32 /dev/urandom | base64" or use "taskvault keygen". If this is
 	// not specified, the traffic will not be encrypted.
 	EncryptKey string `mapstructure:"encrypt"`
 
@@ -68,7 +68,7 @@ type Config struct {
 	// to 30 seconds.
 	RetryJoinIntervalLAN time.Duration `mapstructure:"retry-interval"`
 
-	// RPCPort is the gRPC port used by Dkron. This should be reachable
+	// RPCPort is the gRPC port used by taskvault. This should be reachable
 	// by the other servers and clients.
 	RPCPort int `mapstructure:"rpc-port"`
 
@@ -80,18 +80,18 @@ type Config struct {
 	// It can be (debug|info|warn|error|fatal|panic).
 	LogLevel string `mapstructure:"log-level"`
 
-	// Datacenter is the datacenter this Dkron server belongs to.
+	// Datacenter is the datacenter this taskvault server belongs to.
 	Datacenter string
 
-	// Region is the region this Dkron server belongs to.
+	// Region is the region this taskvault server belongs to.
 	Region string
 
-	// Bootstrap mode is used to bring up the first Dkron server.  It is
+	// Bootstrap mode is used to bring up the first taskvault server.  It is
 	// required so that it can elect a leader without any other nodes
 	// being present
 	Bootstrap bool
 
-	// BootstrapExpect tries to automatically bootstrap the Dkron cluster,
+	// BootstrapExpect tries to automatically bootstrap the taskvault cluster,
 	// by withholding peers until enough servers join.
 	BootstrapExpect int `mapstructure:"bootstrap-expect"`
 
@@ -108,7 +108,7 @@ type Config struct {
 	// leader election.
 	ReconcileInterval time.Duration
 
-	// RaftMultiplier An integer multiplier used by Dkron servers to scale key
+	// RaftMultiplier An integer multiplier used by taskvault servers to scale key
 	// Raft timing parameters.
 	RaftMultiplier int `mapstructure:"raft-multiplier"`
 
@@ -194,11 +194,11 @@ Lower values are used to tighten timing and increase sensitivity while higher
 values relax timings and reduce sensitivity. Tuning this affects the time it 
 takes to detect leader failures and to perform leader elections, at the expense 
 of requiring more network and CPU resources for better performance. By default, 
-Dkron will use a lower-performance timing that's suitable for minimal Dkron 
+taskvault will use a lower-performance timing that's suitable for minimal taskvault 
 servers, currently equivalent to setting this to a value of 5 (this default 
-may be changed in future versions of Dkron, depending if the target minimum 
+may be changed in future versions of taskvault, depending if the target minimum 
 server profile changes). Setting this to a value of 1 will configure Raft to 
-its highest-performance mode is recommended for production Dkron servers. 
+its highest-performance mode is recommended for production taskvault servers. 
 The maximum allowed value is 10.`)
 	cmdFlags.StringSlice("tag", []string{},
 		`Tag can be specified multiple times to attach multiple key/value tag pairs 
@@ -215,18 +215,18 @@ The RPC IP Address will be the same as the bind address.`)
 	cmdFlags.Int("bootstrap-expect", 0,
 		`Provides the number of expected servers in the datacenter. Either this value 
 should not be provided or the value must agree with other servers in the 
-cluster. When provided, Dkron waits until the specified number of servers are 
+cluster. When provided, taskvault waits until the specified number of servers are 
 available and then bootstraps the cluster. This allows an initial leader to be 
 elected automatically. This flag requires server mode.`)
 	cmdFlags.String("data-dir", c.DataDir,
 		`Specifies the directory to use for server-specific data, including the 
 replicated log. By default, this is the top-level data-dir, 
-like [/var/lib/dkron]`)
+like [/var/lib/taskvault]`)
 	cmdFlags.String("datacenter", c.Datacenter,
 		`Specifies the data center of the local agent. All members of a datacenter 
 should share a local LAN connection.`)
 	cmdFlags.String("region", c.Region,
-		`Specifies the region the Dkron agent is a member of. A region typically maps 
+		`Specifies the region the taskvault agent is a member of. A region typically maps 
 to a geographic region, for example us, with potentially multiple zones, which 
 map to datacenters such as us-west and us-east`)
 	cmdFlags.String("serf-reconnect-timeout", c.SerfReconnectTimeout,

@@ -20,7 +20,7 @@ var (
 )
 
 func TestAgentCommand_runForElection(t *testing.T) {
-	dir, err := ioutil.TempDir("", "dkron-test")
+	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -112,7 +112,7 @@ func lastSelector(nodes []Node) int {
 }
 
 func Test_getTargetNodes(t *testing.T) {
-	dir, err := ioutil.TempDir("", "dkron-test")
+	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -328,7 +328,7 @@ func Test_getTargetNodes(t *testing.T) {
 }
 
 func TestEncrypt(t *testing.T) {
-	dir, err := ioutil.TempDir("", "dkron-test")
+	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -354,7 +354,7 @@ func TestEncrypt(t *testing.T) {
 }
 
 func Test_advertiseRPCAddr(t *testing.T) {
-	dir, err := ioutil.TempDir("", "dkron-test")
+	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -385,7 +385,7 @@ func Test_advertiseRPCAddr(t *testing.T) {
 }
 
 func Test_bindRPCAddr(t *testing.T) {
-	dir, err := ioutil.TempDir("", "dkron-test")
+	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 
@@ -414,7 +414,7 @@ func Test_bindRPCAddr(t *testing.T) {
 }
 
 func TestAgentConfig(t *testing.T) {
-	dir, err := ioutil.TempDir("", "dkron-test")
+	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(dir)
 

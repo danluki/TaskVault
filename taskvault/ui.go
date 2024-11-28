@@ -74,7 +74,7 @@ func (h *HTTPTransport) UI(r *gin.RouterGroup) {
 			ctx.HTML(http.StatusOK, "index.html", gin.H{
 				"TASKVAULT_API_URL":       fmt.Sprintf("../%s", apiPathPrefix),
 				"TASKVAULT_LEADER":        ln,
-				"TASKVAULT_TOTAL_JOBS":    totalPairs,
+				"TASKVAULT_TOTAL_PAIRS":   totalPairs,
 				"TASKVAULT_PAIRS_ADDED":   pairsAdded,
 				"TASKVAULT_PAIRS_UPDATED": pairsUpdated,
 				"TASKVAULT_PAIRS_DELETED": pairsDeleted,

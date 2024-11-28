@@ -1,4 +1,4 @@
-FROM golang:1.23.1
+FROM golang:1.23.3
 LABEL maintainer="Danil Lukinykh <danluki02@yandex.ru>"
 
 EXPOSE 8080 8946

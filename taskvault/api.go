@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/danluki/taskvault/types"
 	"github.com/gin-contrib/expvar"
+	"github.com/hashicorp/go-uuid"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -117,14 +119,14 @@ func renderJSON(c *gin.Context, status int, v interface{}) {
 }
 
 func (h *HTTPTransport) membersHandler(c *gin.Context) {
-	// mems := []*types.Member{}
-	// for _, m := range h.agent.serf.Members() {
-	// 	id, _ := uuid.GenerateUUID()
-	// 	mid := &types.Member{m, id, m.Status.String()}
-	// 	mems = append(mems, mid)
-	// }
-	// c.Header("X-Total-Count", strconv.Itoa(len(mems)))
-	// renderJSON(c, http.StatusOK, mems)
+	mems := []*types.Member{}
+	for _, m := range h.agent.serf.Members() {
+		id, _ := uuid.GenerateUUID()
+		mid := &types.Member{m, id, m.Status.String()}
+		mems = append(mems, mid)
+	}
+	c.Header("X-Total-Count", strconv.Itoa(len(mems)))
+	renderJSON(c, http.StatusOK, mems)
 }
 
 func (h *HTTPTransport) leaderHandler(c *gin.Context) {

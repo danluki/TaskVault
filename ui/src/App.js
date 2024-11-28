@@ -1,0 +1,10 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Admin, Resource, CustomRoutes } from 'react-admin';
+import { Route } from "react-router-dom";
+import { createHashHistory } from "history";
+import { Layout } from './layout';
+import dataProvider from './dataProvider';
+import Dashboard from './dashboard';
+import Settings from './settings/Settings';
+var history = createHashHistory();
+export var App = function () { return _jsxs(Admin, { dashboard: Dashboard, dataProvider: dataProvider, layout: Layout, children: [_jsx(Resource, { name: "members" }), _jsx(CustomRoutes, { children: _jsx(Route, { path: "/settings", element: _jsx(Settings, {}) }) })] }); };

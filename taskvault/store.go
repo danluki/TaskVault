@@ -9,7 +9,7 @@ import (
 )
 
 // Store is the local implementation of the Storage interface.
-// It gives dkron the ability to manipulate its embedded storage
+// It gives taskvault the ability to manipulate its embedded storage
 // BuntDB.
 type Store struct {
 	db   *buntdb.DB
