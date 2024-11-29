@@ -1,0 +1,19 @@
+services:
+  taskvault-server4:
+    build: .
+    ports:
+      - "8083:8080"
+      - "8946"
+      - "6868"
+    environment:
+      - GODEBUG=netdns=go
+    command: taskvault agent --server --retry-join=taskvault:8946,taskvault-server1:8946 --log-level=debug --bootstrap-expect=3  --node-name=taskvault4 --tag server=2
+  taskvault-server5:
+    build: .
+    ports:
+      - "8084:8080"
+      - "8946"
+      - "6868"
+    environment:
+      - GODEBUG=netdns=go
+    command: taskvault agent --server --retry-join=taskvault:8946,taskvault-server1:8946 --log-level=debug  --node-name=taskvault5 --tag server=2
