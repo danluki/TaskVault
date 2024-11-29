@@ -26,3 +26,13 @@ services:
     environment:
       - GODEBUG=netdns=go
     command: taskvault agent --server --retry-join=taskvault:8946 --log-level=debug  --node-name=taskvault3 --tag server=2
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+    ports:
+      - 9090:9090
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"

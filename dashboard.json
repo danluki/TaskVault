@@ -1,0 +1,120 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": null,
+    "title": "TaskVault Metrics",
+    "tags": ["taskvault"],
+    "timezone": "browser",
+    "schemaVersion": 37,
+    "version": 1,
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Query Events Overview",
+        "targets": [
+          {
+            "expr": "taskvault_agent_event_received_query_execution_done",
+            "legendFormat": "Query Execution Done"
+          },
+          {
+            "expr": "taskvault_agent_event_received_query_run_job",
+            "legendFormat": "Query Run Job"
+          }
+        ],
+        "id": 1
+      },
+      {
+        "type": "graph",
+        "title": "Gossip Traffic",
+        "targets": [
+          {
+            "expr": "taskvault_memberlist_gossip",
+            "legendFormat": "Gossip Messages"
+          },
+          {
+            "expr": "taskvault_memberlist_probeNode",
+            "legendFormat": "Probe Node"
+          },
+          {
+            "expr": "taskvault_memberlist_pushPullNode",
+            "legendFormat": "Push Pull Node"
+          }
+        ],
+        "id": 2
+      },
+      {
+        "type": "graph",
+        "title": "Network Traffic",
+        "targets": [
+          {
+            "expr": "taskvault_memberlist_tcp_sent",
+            "legendFormat": "TCP Sent"
+          },
+          {
+            "expr": "taskvault_memberlist_tcp_connect",
+            "legendFormat": "TCP Connect"
+          },
+          {
+            "expr": "taskvault_memberlist_udp_sent",
+            "legendFormat": "UDP Sent"
+          },
+          {
+            "expr": "taskvault_memberlist_udp_received",
+            "legendFormat": "UDP Received"
+          }
+        ],
+        "id": 3
+      },
+      {
+        "type": "graph",
+        "title": "Go Runtime Metrics",
+        "targets": [
+          {
+            "expr": "taskvault_runtime_num_goroutines",
+            "legendFormat": "Goroutines"
+          },
+          {
+            "expr": "taskvault_runtime_alloc_bytes",
+            "legendFormat": "Allocated Bytes"
+          },
+          {
+            "expr": "taskvault_runtime_heap_objects",
+            "legendFormat": "Heap Objects"
+          }
+        ],
+        "id": 4
+      },
+      {
+        "type": "graph",
+        "title": "GRPC Calls",
+        "targets": [
+          {
+            "expr": "taskvault_grpc_call_execution_done",
+            "legendFormat": "Call Execution Done"
+          },
+          {
+            "expr": "taskvault_grpc_call_get_job",
+            "legendFormat": "Call Get Job"
+          }
+        ],
+        "id": 5
+      },
+      {
+        "type": "graph",
+        "title": "Serf Messaging",
+        "targets": [
+          {
+            "expr": "taskvault_serf_msgs_received",
+            "legendFormat": "Messages Received"
+          },
+          {
+            "expr": "taskvault_serf_msgs_sent",
+            "legendFormat": "Messages Sent"
+          }
+        ],
+        "id": 6
+      }
+    ],
+    "refresh": "10s"
+  }
+}

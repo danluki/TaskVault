@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'taskvault'
+    static_configs:
+      - targets: 
+          - 'taskvault:8080'
+          - 'taskvault-server1:8080'
+          - 'taskvault-server2:8080'
+    metrics_path: '/metrics'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: '${1}' # Keeps the target's original address
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

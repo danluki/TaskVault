@@ -61,7 +61,7 @@ func (grpcc *GRPCClient) Connect(addr string) (*grpc.ClientConn, error) {
 
 // CreateValue implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) CreateValue(key string, value string) (*Pair, error) {
-	defer metrics.MeasureSince([]string{"grpc", "get_value"}, time.Now())
+	defer metrics.MeasureSince([]string{"grpc", "create_value"}, time.Now())
 	var conn *grpc.ClientConn
 
 	addr := grpcc.agent.raft.Leader()
