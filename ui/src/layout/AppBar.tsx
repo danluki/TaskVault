@@ -41,20 +41,9 @@ const ConfigurationMenu = forwardRef<any, any>((props, ref) => {
   );
 });
 
-const CustomUserMenu = (props: any) => (
-  <UserMenu {...props}>
-    <MenuItemLink
-      to="https://dkron.io/docs/basics/getting-started"
-      primaryText="Docs"
-      leftIcon={<BookIcon />}
-    />
-    {/* <ConfigurationMenu /> */}
-  </UserMenu>
-);
-
 const CustomAppBar = (props: any) => {
   return (
-    <StyledAppBar {...props} elevation={1} userMenu={<CustomUserMenu />}>
+    <StyledAppBar {...props} elevation={1}>
       <Typography
         variant="h6"
         color="inherit"

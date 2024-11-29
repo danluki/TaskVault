@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader } from "@mui/material";
 import { List, Datagrid, TextField } from "react-admin";
 import { TagsField } from "../TagsField";
 import Leader from "./Leader";
-import FailedJobs from "./FailedJobs";
-import SuccessfulJobs from "./SuccessfulJobs";
-import UntriggeredJobs from "./UntriggeredJobs";
-import TotalJobs from "./TotalJobs";
+// import FailedPairs from "./FailedPairs";
+// import SuccessfulPairs from "./SuccessfulPairs";
+// import UntriggeredPairs from "./UntriggeredPairs";
+import TotalPairs from "./TotalPairs";
 
 let fakeProps = {
   basePath: "/members",
@@ -41,15 +41,15 @@ const Dashboard = () => (
             <div style={styles.flex}>
               <Leader value={window.TASKVAULT_LEADER || "devel"} />
               <Spacer />
-              <TotalJobs value={window.TASKVAULT_TOTAL_PAIRS || "0"} />
+              <TotalPairs value={window.TASKVAULT_TOTAL_PAIRS || "0"} />
               <Spacer />
-              <SuccessfulJobs value={window.TASKVAULT_PAIRS_ADDED || "0"} />
+              {/* <PairsAdded value={window.TASKVAULT_PAIRS_ADDED || "0"} /> */}
               <Spacer />
-              <FailedJobs value={window.TASKVAULT_PAIRS_UPDATED || "0"} />
+              {/* <PairsUpdated value={window.TASKVAULT_PAIRS_UPDATED || "0"} /> */}
               <Spacer />
-              <UntriggeredJobs
+              {/* <UntriggeredPairs
                 value={window.window.TASKVAULT_PAIRS_DELETED || "0"}
-              />
+              /> */}
             </div>
           </div>
         </div>
