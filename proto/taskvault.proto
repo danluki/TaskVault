@@ -62,7 +62,7 @@ message GetValueResponse {
 }
 
 message GetAllPairsResponse {
-  map<string, string> pairs = 1;
+  repeated Pair pairs = 1;
 }
 
 message Pair {
@@ -75,7 +75,7 @@ service Taskvault {
   rpc GetValue (GetValueRequest) returns (GetValueResponse);
   rpc Leave (google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc UpdateValue (UpdateValueRequest) returns (UpdateValueResponse);
-  rpc DeleteJob (DeleteValueRequest) returns (DeleteValueResponse);
+  rpc DeleteValue (DeleteValueRequest) returns (DeleteValueResponse);
   rpc RaftGetConfiguration (google.protobuf.Empty) returns (RaftGetConfigurationResponse);
   rpc RaftRemovePeerByID (RaftRemovePeerByIDRequest) returns (google.protobuf.Empty);
   rpc GetAllPairs (google.protobuf.Empty) returns  (GetAllPairsResponse);

@@ -1,0 +1,14 @@
+docs
+ui
+static
+site
+public
+vendor
+docker-compose
+taskvault_theme
+build/
+website
+taskvault-*
+main
+*.data
+node_modules

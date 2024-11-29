@@ -236,10 +236,12 @@ this to about 5s, because there is no reason to try reconnects for default
 24h value. Also Raft behaves oddly if node is not reaped and returned with 
 same ID, but different IP.
 Format there: https://golang.org/pkg/time/#ParseDuration`)
+	cmdFlags.Bool("bootstrap", false,
+		"Bootstrap the cluster.")
 	cmdFlags.Bool("ui", true,
 		"Enable the web UI on this node. The node must be server.")
 
-	cmdFlags.Bool("enable-prometheus", false, "Enable serving prometheus metrics")
+	cmdFlags.Bool("enable-prometheus", true, "Enable serving prometheus metrics")
 
 	return cmdFlags
 }

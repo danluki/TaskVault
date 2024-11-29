@@ -94,12 +94,12 @@ func (h *HTTPTransport) APIRoutes(r *gin.RouterGroup, middleware ...gin.HandlerF
 	v1.GET("/isleader", h.isLeaderHandler)
 	v1.POST("/leave", h.leaveHandler)
 
-	pairs := v1.Group("/pairs")
-	pairs.GET("/", h.pairsHandler)
+	pairs := v1.Group("/storage")
+	pairs.GET("", h.pairsHandler)
 	pairs.GET("/:key", h.pairGetHandler)
-	pairs.POST("/:key", h.pairPostHandler)
+	pairs.POST("", h.pairPostHandler)
 	pairs.DELETE("/:key", h.pairDeleteHandler)
-	pairs.PATCH("/:key", h.pairDeleteHandler)
+	pairs.PATCH("/", h.pairDeleteHandler)
 }
 
 // MetaMiddleware adds middleware to the gin Context.
@@ -208,37 +208,43 @@ func (h *HTTPTransport) pairsHandler(c *gin.Context) {
 }
 
 func (h *HTTPTransport) pairGetHandler(c *gin.Context) {
-	pairName := c.Param("pair")
+	pairName := c.Param("key")
 
 	pair, err := h.agent.Store.GetValue(pairName)
 	if err != nil {
 		h.logger.Error(err)
+		c.Status(http.StatusNotFound)
+		return
 	}
 
 	renderJSON(c, http.StatusOK, pair)
 }
 
 func (h *HTTPTransport) pairDeleteHandler(c *gin.Context) {
-	//keyName := c.Param("key")
+	keyName := c.Param("key")
 
-	// // Call gRPC Deletepair
-	// pair, err := h.agent.GRPCClient.DeletePair(keyName)
-	// if err != nil {
-	// 	_ = c.AbortWithError(http.StatusNotFound, err)
-	// 	return
-	// }
-	// renderJSON(c, http.StatusOK, pair)
+	// Call gRPC Deletepair
+	err := h.agent.GRPCClient.DeleteValue(keyName)
+	if err != nil {
+		_ = c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func (h *HTTPTransport) pairPostHandler(c *gin.Context) {
-	// pairName := c.Param("pair")
+	pair := &Pair{}
+	if err := c.ShouldBindJSON(pair); err != nil {
+		h.logger.Error(err)
+		_ = c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 
-	// // Call gRPC Post pair
-	// pair, err := h.agent.GRPCClient.Createpair(pairName)
-	// if err != nil {
-	// 	_ = c.AbortWithError(http.StatusNotFound, err)
-	// 	return
-	// }
+	if _, err := h.agent.GRPCClient.CreateValue(pair.Key, pair.Value); err != nil {
+		h.logger.Error(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+	}
 
-	// renderJSON(c, http.StatusCreated, pair)
+	c.Status(http.StatusCreated)
 }

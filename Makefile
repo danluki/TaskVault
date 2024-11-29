@@ -56,3 +56,11 @@ main: taskvault/ui-dist types/taskvault.pb.go types/executor.pb.go *.go */*.go *
 	GOBIN=`pwd` go install ./builtin/...
 	go mod tidy
 	go build main.go
+
+.PHONY: run-test-mode
+
+run-test-mode:
+	go run main.go agent --server --http-addr=localhost:8080 --advertise-addr=localhost:6868 --bind-addr=localhost:8946 --log-level=debug --bootstrap-expect=1 &
+	go run main.go agent --server --http-addr=localhost:8081 --advertise-addr=localhost:6869 --bind-addr=localhost:8947 --retry-join=localhost:8946 --log-level=debug --bootstrap-expect=3 --tag server=2 &
+	go run main.go agent --server --http-addr=localhost:8082 --advertise-addr=localhost:6870 --bind-addr=localhost:8948 --retry-join=localhost:8946 --log-level=debug --tag server=2 &
+	wait

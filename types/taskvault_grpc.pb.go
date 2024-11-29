@@ -27,7 +27,7 @@ type TaskvaultClient interface {
 	GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error)
 	Leave(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UpdateValue(ctx context.Context, in *UpdateValueRequest, opts ...grpc.CallOption) (*UpdateValueResponse, error)
-	DeleteJob(ctx context.Context, in *DeleteValueRequest, opts ...grpc.CallOption) (*DeleteValueResponse, error)
+	DeleteValue(ctx context.Context, in *DeleteValueRequest, opts ...grpc.CallOption) (*DeleteValueResponse, error)
 	RaftGetConfiguration(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RaftGetConfigurationResponse, error)
 	RaftRemovePeerByID(ctx context.Context, in *RaftRemovePeerByIDRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetAllPairs(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetAllPairsResponse, error)
@@ -77,9 +77,9 @@ func (c *taskvaultClient) UpdateValue(ctx context.Context, in *UpdateValueReques
 	return out, nil
 }
 
-func (c *taskvaultClient) DeleteJob(ctx context.Context, in *DeleteValueRequest, opts ...grpc.CallOption) (*DeleteValueResponse, error) {
+func (c *taskvaultClient) DeleteValue(ctx context.Context, in *DeleteValueRequest, opts ...grpc.CallOption) (*DeleteValueResponse, error) {
 	out := new(DeleteValueResponse)
-	err := c.cc.Invoke(ctx, "/types.Taskvault/DeleteJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/types.Taskvault/DeleteValue", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ type TaskvaultServer interface {
 	GetValue(context.Context, *GetValueRequest) (*GetValueResponse, error)
 	Leave(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	UpdateValue(context.Context, *UpdateValueRequest) (*UpdateValueResponse, error)
-	DeleteJob(context.Context, *DeleteValueRequest) (*DeleteValueResponse, error)
+	DeleteValue(context.Context, *DeleteValueRequest) (*DeleteValueResponse, error)
 	RaftGetConfiguration(context.Context, *emptypb.Empty) (*RaftGetConfigurationResponse, error)
 	RaftRemovePeerByID(context.Context, *RaftRemovePeerByIDRequest) (*emptypb.Empty, error)
 	GetAllPairs(context.Context, *emptypb.Empty) (*GetAllPairsResponse, error)
@@ -144,8 +144,8 @@ func (UnimplementedTaskvaultServer) Leave(context.Context, *emptypb.Empty) (*emp
 func (UnimplementedTaskvaultServer) UpdateValue(context.Context, *UpdateValueRequest) (*UpdateValueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateValue not implemented")
 }
-func (UnimplementedTaskvaultServer) DeleteJob(context.Context, *DeleteValueRequest) (*DeleteValueResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteJob not implemented")
+func (UnimplementedTaskvaultServer) DeleteValue(context.Context, *DeleteValueRequest) (*DeleteValueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteValue not implemented")
 }
 func (UnimplementedTaskvaultServer) RaftGetConfiguration(context.Context, *emptypb.Empty) (*RaftGetConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RaftGetConfiguration not implemented")
@@ -241,20 +241,20 @@ func _Taskvault_UpdateValue_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Taskvault_DeleteJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Taskvault_DeleteValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteValueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskvaultServer).DeleteJob(ctx, in)
+		return srv.(TaskvaultServer).DeleteValue(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/types.Taskvault/DeleteJob",
+		FullMethod: "/types.Taskvault/DeleteValue",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskvaultServer).DeleteJob(ctx, req.(*DeleteValueRequest))
+		return srv.(TaskvaultServer).DeleteValue(ctx, req.(*DeleteValueRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -337,8 +337,8 @@ var Taskvault_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Taskvault_UpdateValue_Handler,
 		},
 		{
-			MethodName: "DeleteJob",
-			Handler:    _Taskvault_DeleteJob_Handler,
+			MethodName: "DeleteValue",
+			Handler:    _Taskvault_DeleteValue_Handler,
 		},
 		{
 			MethodName: "RaftGetConfiguration",

@@ -14,7 +14,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import { jsx as _jsx } from "react/jsx-runtime";
-import { Component } from 'react';
+import { Component } from "react";
 var Clock = /** @class */ (function (_super) {
     __extends(Clock, _super);
     function Clock(props) {

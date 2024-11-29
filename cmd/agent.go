@@ -67,7 +67,7 @@ func handleSignals() int {
 	signalCh := make(chan os.Signal, 4)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
-WAIT:
+	// WAIT:
 	// Wait for a signal
 	var sig os.Signal
 	select {
@@ -82,11 +82,11 @@ WAIT:
 	fmt.Printf("Caught signal: %v", sig)
 
 	// // Check if this is a SIGHUP
-	if sig == syscall.SIGHUP {
-		// TODO: implement if wanna use config reload
-		// handleReload()
-		goto WAIT
-	}
+	// if sig == syscall.SIGHUP {
+	// 	// TODO: implement if wanna use config reload
+	// 	// handleReload()
+	// 	goto WAIT
+	// }
 
 	// Fail fast if not doing a graceful leave
 	if sig != syscall.SIGTERM && sig != os.Interrupt {

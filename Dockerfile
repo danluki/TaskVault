@@ -1,16 +1,19 @@
-FROM golang:1.23.3
-LABEL maintainer="Danil Lukinykh <danluki02@yandex.ru>"
+# Stage 1: Build
+FROM golang:1.23.3 AS builder
 
-EXPOSE 8080 8946
-
-RUN mkdir -p /app
 WORKDIR /app
 
-COPY go.mod go.mod
-COPY go.sum go.sum
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go install ./...
+RUN go build -o taskvault .
 
-CMD ["taskvault"]
+# Stage 2: Runtime
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=builder /app/taskvault .
+
+EXPOSE 8080 8946
+CMD ["./taskvault"]

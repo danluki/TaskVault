@@ -76,7 +76,6 @@ type Agent struct {
 	serf        *serf.Serf
 	config      *Config
 	eventCh     chan serf.Event
-	kv          *KV
 	ready       bool
 	shutdownCh  chan struct{}
 	retryJoinCh chan error
