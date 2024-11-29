@@ -13,7 +13,7 @@ const TotalPairs: FC<Props> = ({ value }) => {
     <CardWithIcon
       to="/storage"
       icon={Icon}
-      title="Total Jobs"
+      title="Total Values"
       subtitle={value}
     />
   );

@@ -56,7 +56,7 @@ const PairList = (props: any) => {
           headerClassName={classes.hiddenOnSmallScreens}
         />
         {/* <DateField source="ttl" showTime /> */}
-        <EditButton />
+        {/* <EditButton /> */}
       </Datagrid>
     </List>
   );
