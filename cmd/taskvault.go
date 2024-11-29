@@ -15,6 +15,9 @@ import (
 var cfgFile string
 var config = taskvault.DefaultConfig()
 
+var rpcAddr string
+var ip string
+
 var taskvaultCmd = &cobra.Command{
 	Use:   "taskvault",
 	Short: "Open source distributed job scheduling system",

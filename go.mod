@@ -18,6 +18,7 @@ require (
 	github.com/hashicorp/raft-boltdb v0.0.0-20231211162105-6c830fa4535e
 	github.com/hashicorp/serf v0.10.1
 	github.com/prometheus/client_golang v1.4.0
+	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sirupsen/logrus v1.9.3
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.8.1
