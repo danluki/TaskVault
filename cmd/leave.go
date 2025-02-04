@@ -12,7 +12,7 @@ var leaveCmd = &cobra.Command{
 	Short: "Force an agent to leave the cluster",
 	Long: `Stop stops an agent, if the agent is a server and is running for election
 	stop running for election, if this server was the leader
-	this will force the cluster to elect a new leader and start a new scheduler.`,
+	this will force the cluster to elect a new leader`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		ipa, err := taskvault.ParseSingleIPTemplate(rpcAddr)
 		if err != nil {
@@ -38,5 +38,8 @@ var leaveCmd = &cobra.Command{
 func init() {
 	taskvaultCmd.AddCommand(leaveCmd)
 	leaveCmd.PersistentFlags().
-		StringVar(&rpcAddr, "rpc-addr", "{{ GetPrivateIP }}:6868", "gRPC address of the agent")
+		StringVar(
+			&rpcAddr, "rpc-addr", "{{ GetPrivateIP }}:6868",
+			"gRPC address of the agent",
+		)
 }

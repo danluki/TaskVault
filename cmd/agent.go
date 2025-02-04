@@ -25,16 +25,11 @@ const (
 var agentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Start a taskvault agent",
-	Long: `Start a taskvault agent that schedules jobs, listens for executions and runs executors.
+	Long: `Start a taskvault agent
 It also runs a web UI.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig()
 	},
-	// Run will execute the main functions of the agent command.
-	// This includes the main eventloop and starting the server if enabled.
-	//
-	// The returned value is the exit code.
-	// protoc -I proto/ proto/executor.proto --go_out=plugins=grpc:taskvault/
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return agentRun(args...)
 	},
@@ -43,7 +38,9 @@ It also runs a web UI.`,
 func init() {
 	taskvaultCmd.AddCommand(agentCmd)
 
-	agentCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file path")
+	agentCmd.PersistentFlags().StringVar(
+		&cfgFile, "config", "", "config file path",
+	)
 	agentCmd.Flags().AddFlagSet(taskvault.ConfigFlagSet())
 	_ = viper.BindPFlags(agentCmd.Flags())
 }
@@ -62,13 +59,10 @@ func agentRun(args ...string) error {
 	return nil
 }
 
-// handleSignals blocks until we get an exit-causing signal
 func handleSignals() int {
 	signalCh := make(chan os.Signal, 4)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
-	// WAIT:
-	// Wait for a signal
 	var sig os.Signal
 	select {
 	case s := <-signalCh:
@@ -81,14 +75,6 @@ func handleSignals() int {
 	}
 	fmt.Printf("Caught signal: %v", sig)
 
-	// // Check if this is a SIGHUP
-	// if sig == syscall.SIGHUP {
-	// 	// TODO: implement if wanna use config reload
-	// 	// handleReload()
-	// 	goto WAIT
-	// }
-
-	// Fail fast if not doing a graceful leave
 	if sig != syscall.SIGTERM && sig != os.Interrupt {
 		return 1
 	}
@@ -106,7 +92,6 @@ func handleSignals() int {
 	gracefulCh := make(chan struct{})
 
 	for {
-		//TODO: here we can finish some internal tasks
 		log.Info("Waiting for some internal tasks to finish...")
 		break
 		time.Sleep(1 * time.Second)
@@ -114,7 +99,6 @@ func handleSignals() int {
 
 	close(gracefulCh)
 
-	// Wait for leave or another signal
 	select {
 	case <-signalCh:
 		return 1
@@ -125,8 +109,6 @@ func handleSignals() int {
 	}
 }
 
-// UnmarshalTags is a utility function which takes a slice of strings in
-// key=value format and returns them as a tag mapping.
 func UnmarshalTags(tags []string) (map[string]string, error) {
 	result := make(map[string]string)
 	for _, tag := range tags {

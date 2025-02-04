@@ -24,11 +24,7 @@ var genDocDir string
 var docCmd = &cobra.Command{
 	Use:   "doc",
 	Short: "Generate Markdown documentation for the taskvault CLI.",
-	Long: `Generate Markdown documentation for the taskvault CLI.
-This command is, mostly, used to create up-to-date documentation
-of taskvault's command-line interface for http://taskvault.io/.
-It creates one Markdown file per command with front matter suitable
-for rendering in Hugo.`,
+	Long:  `Generate Markdown documentation for the taskvault CLI.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if _, err := os.Stat(genDocDir); os.IsNotExist(err) {
 			fmt.Println("Directory", genDocDir, "does not exist, creating...")
@@ -55,7 +51,10 @@ for rendering in Hugo.`,
 			return "/cli/" + strings.ToLower(base) + "/"
 		}
 
-		fmt.Println("Generating TaskVault command-line documentation in", genDocDir, "...")
+		fmt.Println(
+			"Generating TaskVault command-line documentation in", genDocDir,
+			"...",
+		)
 		doc.GenMarkdownTreeCustom(cmd.Root(), genDocDir, prepender, linkHandler)
 		fmt.Println("Done.")
 
@@ -66,8 +65,13 @@ for rendering in Hugo.`,
 func init() {
 	taskvaultCmd.AddCommand(docCmd)
 	docCmd.PersistentFlags().
-		StringVar(&genDocDir, "dir", "/tmp/taskvaultdoc/", "the directory to write the doc.")
+		StringVar(
+			&genDocDir, "dir", "/tmp/taskvaultdoc/",
+			"the directory to write the doc.",
+		)
 
 	// For bash-completion
-	docCmd.PersistentFlags().SetAnnotation("dir", cobra.BashCompSubdirsInDir, []string{})
+	docCmd.PersistentFlags().SetAnnotation(
+		"dir", cobra.BashCompSubdirsInDir, []string{},
+	)
 }

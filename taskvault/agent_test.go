@@ -51,7 +51,6 @@ func TestAgentCommand_runForElection(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	// Wait for the first agent to start and elect itself as leader
 	if a1.IsLeader() {
 		m, err := a1.leaderMember()
 		if err != nil {
