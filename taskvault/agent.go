@@ -39,31 +39,31 @@ var (
 type Node = serf.Member
 
 type Agent struct {
-	HTTPTransport Transport
-	Store         Storage
-	GRPCServer    TaskvaultGRPCServer
-	GRPCClient    TaskvaultGRPCClient
-	TLSConfig     *tls.Config
-	serf          *serf.Serf
-	config        *Config
-	eventCh       chan serf.Event
-	ready         bool
-	shutdownCh    chan struct{}
-	retryJoinCh   chan error
+	Store      Storage
+	TLSConfig  *tls.Config
+	config     *Config
+	eventCh    chan serf.Event
+	shutdownCh chan struct{}
+	ready      bool
 
-	leaderCh      <-chan bool
-	raft          *raft.Raft
-	raftLayer     *RaftLayer
-	raftStore     RaftStore
-	raftInmem     *raft.InmemStore
 	raftTransport *raft.NetworkTransport
+	raft          *raft.Raft
+	serf          *serf.Serf
+	HTTPTransport Transport
+	raftStore     RaftStore
+	GRPCClient    TaskvaultGRPCClient
+	raftLayer     *RaftLayer
 	reconcileCh   chan serf.Member
+	raftInmem     *raft.InmemStore
+	GRPCServer    TaskvaultGRPCServer
 	peers         map[string][]*ServerParts
+	logger        *logrus.Entry
+	retryJoinCh   chan error
+	leaderCh      <-chan bool
 	localPeers    map[raft.ServerAddress]*ServerParts
 	peerLock      sync.RWMutex
 	serverLookup  *ServerLookup
 	listener      net.Listener
-	logger        *logrus.Entry
 }
 
 type RaftStore interface {

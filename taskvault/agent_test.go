@@ -60,7 +60,6 @@ func TestAgentCommand_runForElection(t *testing.T) {
 		assert.Equal(t, a1Name, m.Name)
 	}
 
-	// Start another agent
 	c = DefaultConfig()
 	c.BindAddr = a2Addr
 	c.StartJoin = []string{a1Addr + ":8946"}
@@ -76,7 +75,6 @@ func TestAgentCommand_runForElection(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	// Start another agent
 	c = DefaultConfig()
 	ip3, returnFn3 := testutil.TakeIP()
 	defer returnFn3()
@@ -94,16 +92,11 @@ func TestAgentCommand_runForElection(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	// Send a shutdown request
 	_ = a1.Stop()
 
-	// Wait until a follower steps as leader
 	time.Sleep(2 * time.Second)
 	assert.True(t, (a2.IsLeader() || a3.IsLeader()))
 	log.Println(a3.IsLeader())
-
-	// _ = a2.Stop()
-	// _ = a3.Stop()
 }
 
 func lastSelector(nodes []Node) int {
@@ -186,64 +179,86 @@ func Test_getTargetNodes(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	t.Run("Test cardinality of 2 returns correct nodes", func(t *testing.T) {
-		tags := map[string]string{"tag": "test:2"}
+	t.Run(
+		"Test cardinality of 2 returns correct nodes", func(t *testing.T) {
+			tags := map[string]string{"tag": "test:2"}
 
-		nodes := a1.getTargetNodes(tags, lastSelector)
+			nodes := a1.getTargetNodes(tags, lastSelector)
 
-		sort.Slice(nodes, func(i, j int) bool { return nodes[i].Name < nodes[j].Name })
-		assert.Exactly(t, "test1", nodes[0].Name)
-		assert.Exactly(t, "test2", nodes[1].Name)
-		assert.Len(t, nodes, 2)
-	})
+			sort.Slice(
+				nodes,
+				func(i, j int) bool { return nodes[i].Name < nodes[j].Name },
+			)
+			assert.Exactly(t, "test1", nodes[0].Name)
+			assert.Exactly(t, "test2", nodes[1].Name)
+			assert.Len(t, nodes, 2)
+		},
+	)
 
-	t.Run("Test cardinality of 1 with two qualified nodes returns 1 node", func(t *testing.T) {
-		tags2 := map[string]string{"tag": "test:1"}
+	t.Run(
+		"Test cardinality of 1 with two qualified nodes returns 1 node",
+		func(t *testing.T) {
+			tags2 := map[string]string{"tag": "test:1"}
 
-		nodes := a1.getTargetNodes(tags2, defaultSelector)
+			nodes := a1.getTargetNodes(tags2, defaultSelector)
 
-		assert.Len(t, nodes, 1)
-	})
+			assert.Len(t, nodes, 1)
+		},
+	)
 
-	t.Run("Test no cardinality specified, all nodes returned", func(t *testing.T) {
-		var tags3 map[string]string
+	t.Run(
+		"Test no cardinality specified, all nodes returned",
+		func(t *testing.T) {
+			var tags3 map[string]string
 
-		nodes := a1.getTargetNodes(tags3, lastSelector)
+			nodes := a1.getTargetNodes(tags3, lastSelector)
 
-		sort.Slice(nodes, func(i, j int) bool { return nodes[i].Name < nodes[j].Name })
-		assert.Len(t, nodes, 3)
-		assert.Exactly(t, "test1", nodes[0].Name)
-		assert.Exactly(t, "test2", nodes[1].Name)
-		assert.Exactly(t, "test3", nodes[2].Name)
-	})
+			sort.Slice(
+				nodes,
+				func(i, j int) bool { return nodes[i].Name < nodes[j].Name },
+			)
+			assert.Len(t, nodes, 3)
+			assert.Exactly(t, "test1", nodes[0].Name)
+			assert.Exactly(t, "test2", nodes[1].Name)
+			assert.Exactly(t, "test3", nodes[2].Name)
+		},
+	)
 
-	t.Run("Test exclusive tag returns correct node", func(t *testing.T) {
-		tags4 := map[string]string{"tag": "test_client:1"}
+	t.Run(
+		"Test exclusive tag returns correct node", func(t *testing.T) {
+			tags4 := map[string]string{"tag": "test_client:1"}
 
-		nodes := a1.getTargetNodes(tags4, defaultSelector)
+			nodes := a1.getTargetNodes(tags4, defaultSelector)
 
-		assert.Len(t, nodes, 1)
-		assert.Exactly(t, "test3", nodes[0].Name)
-	})
+			assert.Len(t, nodes, 1)
+			assert.Exactly(t, "test3", nodes[0].Name)
+		},
+	)
 
-	t.Run("Test existing tag but no matching value returns no nodes", func(t *testing.T) {
-		tags5 := map[string]string{"tag": "no_tag"}
+	t.Run(
+		"Test existing tag but no matching value returns no nodes",
+		func(t *testing.T) {
+			tags5 := map[string]string{"tag": "no_tag"}
 
-		nodes := a1.getTargetNodes(tags5, defaultSelector)
+			nodes := a1.getTargetNodes(tags5, defaultSelector)
 
-		assert.Len(t, nodes, 0)
-	})
+			assert.Len(t, nodes, 0)
+		},
+	)
 
-	t.Run("Test 1 matching and 1 not matching tag returns no nodes", func(t *testing.T) {
-		tags6 := map[string]string{
-			"foo": "bar:1",
-			"tag": "test:2",
-		}
+	t.Run(
+		"Test 1 matching and 1 not matching tag returns no nodes",
+		func(t *testing.T) {
+			tags6 := map[string]string{
+				"foo": "bar:1",
+				"tag": "test:2",
+			}
 
-		nodes := a1.getTargetNodes(tags6, defaultSelector)
+			nodes := a1.getTargetNodes(tags6, defaultSelector)
 
-		assert.Len(t, nodes, 0)
-	})
+			assert.Len(t, nodes, 0)
+		},
+	)
 
 	t.Run(
 		"Test matching tags with cardinality of 2 but only 1 matching node returns correct node",
@@ -260,15 +275,17 @@ func Test_getTargetNodes(t *testing.T) {
 		},
 	)
 
-	t.Run("Test invalid cardinality yields 0 nodes", func(t *testing.T) {
-		tags9 := map[string]string{
-			"tag": "test:invalid",
-		}
+	t.Run(
+		"Test invalid cardinality yields 0 nodes", func(t *testing.T) {
+			tags9 := map[string]string{
+				"tag": "test:invalid",
+			}
 
-		nodes := a1.getTargetNodes(tags9, defaultSelector)
+			nodes := a1.getTargetNodes(tags9, defaultSelector)
 
-		assert.Len(t, nodes, 0)
-	})
+			assert.Len(t, nodes, 0)
+		},
+	)
 
 	t.Run(
 		"Test two tags matching same 3 servers and cardinality of 1 should always return 1 server",
@@ -286,7 +303,9 @@ func Test_getTargetNodes(t *testing.T) {
 			distrib := make(map[string]int)
 
 			// Modified version of getTargetNodes
-			faked_getTargetNodes := func(tags map[string]string, selectFunc func(nodes []Node) int) []Node {
+			faked_getTargetNodes := func(
+				tags map[string]string, selectFunc func(nodes []Node) int,
+			) []Node {
 				bareTags, card := cleanTags(tags, a1.logger)
 				allNodes := a1.serf.Members()
 
@@ -312,7 +331,9 @@ func Test_getTargetNodes(t *testing.T) {
 
 			// Each node must have been chosen 1/3 of the time.
 			for name, count := range distrib {
-				fmt.Println(name, float64(count)/float64(sampleSize)*100.0, "%", count)
+				fmt.Println(
+					name, float64(count)/float64(sampleSize)*100.0, "%", count,
+				)
 			}
 			assert.Exactly(t, sampleSize/3, distrib["test1"])
 			assert.Exactly(t, sampleSize/3, distrib["test2"])
@@ -554,13 +575,15 @@ func Test_getQualifyingNodes(t *testing.T) {
 	}
 	agentStub := NewAgent(DefaultConfig())
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := agentStub.getQualifyingNodes(tt.inNodes, tt.inTags)
-			assert.Len(t, actual, len(tt.want))
-			for _, expectedItem := range tt.want {
-				assert.Contains(t, actual, expectedItem)
-			}
-		})
+		t.Run(
+			tt.name, func(t *testing.T) {
+				actual := agentStub.getQualifyingNodes(tt.inNodes, tt.inTags)
+				assert.Len(t, actual, len(tt.want))
+				for _, expectedItem := range tt.want {
+					assert.Contains(t, actual, expectedItem)
+				}
+			},
+		)
 	}
 }
 
@@ -606,13 +629,15 @@ func Test_filterArray(t *testing.T) {
 	}
 
 	for _, tt := range filtertests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := filterArray(tt.in, tt.filter)
-			assert.Len(t, actual, len(tt.expect))
-			for _, expectedItem := range tt.expect {
-				assert.Contains(t, actual, expectedItem)
-			}
-		})
+		t.Run(
+			tt.name, func(t *testing.T) {
+				actual := filterArray(tt.in, tt.filter)
+				assert.Len(t, actual, len(tt.expect))
+				for _, expectedItem := range tt.expect {
+					assert.Contains(t, actual, expectedItem)
+				}
+			},
+		)
 	}
 }
 
@@ -635,8 +660,14 @@ func Test_selectNodes(t *testing.T) {
 		selector    func([]Node) int
 		expect      []Node
 	}{
-		{"Cardinality 0 returns none", []Node{n1, n2, n3}, 0, defaultSelector, []Node{}},
-		{"Cardinality < 0 returns none", []Node{n1, n2, n3}, -1, defaultSelector, []Node{}},
+		{
+			"Cardinality 0 returns none", []Node{n1, n2, n3}, 0,
+			defaultSelector, []Node{},
+		},
+		{
+			"Cardinality < 0 returns none", []Node{n1, n2, n3}, -1,
+			defaultSelector, []Node{},
+		},
 		{
 			"Cardinality > #nodes returns all",
 			[]Node{n1, n2, n3},
@@ -651,19 +682,33 @@ func Test_selectNodes(t *testing.T) {
 			defaultSelector,
 			[]Node{n1, n2, n3},
 		},
-		{"Cardinality = 1 returns one", []Node{n1, n2, n3}, 1, lastSelector, []Node{n3}},
-		{"Cardinality = 2 returns two", []Node{n1, n2, n3}, 2, lastSelector, []Node{n2, n3}},
+		{
+			"Cardinality = 1 returns one", []Node{n1, n2, n3}, 1, lastSelector,
+			[]Node{n3},
+		},
+		{
+			"Cardinality = 2 returns two", []Node{n1, n2, n3}, 2, lastSelector,
+			[]Node{n2, n3},
+		},
 		{"Pick node2", []Node{n1, n2, n3}, 1, node2Selector, []Node{n2}},
-		{"No nodes, card>0 returns none", []Node{}, 2, defaultSelector, []Node{}},
-		{"No nodes, card=0 returns none", []Node{}, 0, defaultSelector, []Node{}},
+		{
+			"No nodes, card>0 returns none", []Node{}, 2, defaultSelector,
+			[]Node{},
+		},
+		{
+			"No nodes, card=0 returns none", []Node{}, 0, defaultSelector,
+			[]Node{},
+		},
 	}
 	for _, tt := range selectertests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := selectNodes(tt.in, tt.cardinality, tt.selector)
-			assert.Len(t, actual, len(tt.expect))
-			for _, expectedItem := range tt.expect {
-				assert.Contains(t, actual, expectedItem)
-			}
-		})
+		t.Run(
+			tt.name, func(t *testing.T) {
+				actual := selectNodes(tt.in, tt.cardinality, tt.selector)
+				assert.Len(t, actual, len(tt.expect))
+				for _, expectedItem := range tt.expect {
+					assert.Contains(t, actual, expectedItem)
+				}
+			},
+		)
 	}
 }

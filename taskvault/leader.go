@@ -13,15 +13,9 @@ import (
 )
 
 const (
-	// barrierWriteTimeout is used to give Raft a chance to process a
-	// possible loss of leadership event if we are unable to get a barrier
-	// while leader.
 	barrierWriteTimeout = 2 * time.Minute
 )
 
-// monitorLeadership is used to monitor if we acquire or lose our role
-// as the leader in the Raft cluster. There is some work the leader is
-// expected to do, so we must react to changes
 func (a *Agent) monitorLeadership() {
 	var weAreLeaderCh chan struct{}
 	var leaderLoop sync.WaitGroup
@@ -79,27 +73,26 @@ func (a *Agent) leadershipTransfer() error {
 			return fmt.Errorf("leadership transfer not supported with Raft version lower than 3")
 		}
 
-		a.logger.Error("failed to transfer leadership attempt, will retry",
+		a.logger.Error(
+			"failed to transfer leadership attempt, will retry",
 			"attempt", i,
 			"retry_limit", retryCount,
 			"error", err,
 		)
 	}
-	return fmt.Errorf("failed to transfer leadership in %d attempts", retryCount)
+	return fmt.Errorf(
+		"failed to transfer leadership in %d attempts", retryCount,
+	)
 }
 
-// leaderLoop runs as long as we are the leader to run various
-// maintenance activities
 func (a *Agent) leaderLoop(stopCh chan struct{}) {
 	var reconcileCh chan serf.Member
 	establishedLeader := false
 
 RECONCILE:
-	// Setup a reconciliation timer
 	reconcileCh = nil
 	interval := time.After(a.config.ReconcileInterval)
 
-	// Apply a raft barrier to ensure our FSM is caught up
 	start := time.Now()
 	barrier := a.raft.Barrier(barrierWriteTimeout)
 	if err := barrier.Error(); err != nil {
@@ -108,20 +101,14 @@ RECONCILE:
 	}
 	metrics.MeasureSince([]string{"taskvault", "leader", "barrier"}, start)
 
-	// Check if we need to handle initial leadership actions
 	if !establishedLeader {
 		if err := a.establishLeadership(stopCh); err != nil {
 			a.logger.WithError(err).Error("taskvault: failed to establish leadership")
 
-			// Immediately revoke leadership since we didn't successfully
-			// establish leadership.
 			if err := a.revokeLeadership(); err != nil {
 				a.logger.WithError(err).Error("taskvault: failed to revoke leadership")
 			}
 
-			// Attempt to transfer leadership. If successful, leave the
-			// leaderLoop since this node is no longer the leader. Otherwise
-			// try to establish leadership again after 5 seconds.
 			if err := a.leadershipTransfer(); err != nil {
 				a.logger.Error("failed to transfer leadership", "error", err)
 				interval = time.After(5 * time.Second)
@@ -180,7 +167,9 @@ WAIT:
 // reconcile is used to reconcile the differences between Serf
 // membership and what is reflected in our strongly consistent store.
 func (a *Agent) reconcile() error {
-	defer metrics.MeasureSince([]string{"taskvault", "leader", "reconcile"}, time.Now())
+	defer metrics.MeasureSince(
+		[]string{"taskvault", "leader", "reconcile"}, time.Now(),
+	)
 
 	members := a.serf.Members()
 	for _, member := range members {
@@ -198,7 +187,11 @@ func (a *Agent) reconcileMember(member serf.Member) error {
 	if !valid || parts.Region != a.config.Region {
 		return nil
 	}
-	defer metrics.MeasureSince([]string{"taskvault", "leader", "reconcileMember"}, time.Now())
+	defer metrics.MeasureSince(
+		[]string{
+			"taskvault", "leader", "reconcileMember",
+		}, time.Now(),
+	)
 
 	var err error
 	switch member.Status {
@@ -208,7 +201,9 @@ func (a *Agent) reconcileMember(member serf.Member) error {
 		err = a.removeRaftPeer(member, parts)
 	}
 	if err != nil {
-		a.logger.WithError(err).WithField("member", member).Error("failed to reconcile member")
+		a.logger.WithError(err).WithField(
+			"member", member,
+		).Error("failed to reconcile member")
 		return err
 	}
 	return nil
@@ -219,7 +214,11 @@ func (a *Agent) reconcileMember(member serf.Member) error {
 // previously inflight transactions have been committed and that our
 // state is up-to-date.
 func (a *Agent) establishLeadership(stopCh chan struct{}) error {
-	defer metrics.MeasureSince([]string{"taskvault", "leader", "establish_leadership"}, time.Now())
+	defer metrics.MeasureSince(
+		[]string{
+			"taskvault", "leader", "establish_leadership",
+		}, time.Now(),
+	)
 
 	a.logger.Info("agent: Starting")
 	return nil
@@ -228,7 +227,11 @@ func (a *Agent) establishLeadership(stopCh chan struct{}) error {
 // revokeLeadership is invoked once we step down as leader.
 // This is used to cleanup any state that may be specific to a leader.
 func (a *Agent) revokeLeadership() error {
-	defer metrics.MeasureSince([]string{"taskvault", "leader", "revoke_leadership"}, time.Now())
+	defer metrics.MeasureSince(
+		[]string{
+			"taskvault", "leader", "revoke_leadership",
+		}, time.Now(),
+	)
 	// Stop the scheduler, running jobs will continue to finish but we
 	// can not actively wait for them blocking the execution here.
 	// TODO: probably some logic for example scheduler stop
@@ -302,7 +305,9 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 	// Attempt to add as a peer
 	switch {
 	case minRaftProtocol >= 3:
-		addFuture := a.raft.AddVoter(raft.ServerID(parts.ID), raft.ServerAddress(addr), 0, 0)
+		addFuture := a.raft.AddVoter(
+			raft.ServerID(parts.ID), raft.ServerAddress(addr), 0, 0,
+		)
 		if err := addFuture.Error(); err != nil {
 			a.logger.WithError(err).Error("taskvault: failed to add raft peer")
 			return err
@@ -320,7 +325,10 @@ func (a *Agent) removeRaftPeer(m serf.Member, parts *ServerParts) error {
 	// is leaving. Instead, we should allow a follower to take-over and
 	// deregister us later.
 	if strings.EqualFold(m.Name, a.config.NodeName) {
-		a.logger.Warn("removing self should be done by follower", "name", a.config.NodeName)
+		a.logger.Warn(
+			"removing self should be done by follower", "name",
+			a.config.NodeName,
+		)
 		return nil
 	}
 
@@ -337,7 +345,9 @@ func (a *Agent) removeRaftPeer(m serf.Member, parts *ServerParts) error {
 	for _, server := range configFuture.Configuration().Servers {
 		// If we understand the new add/remove APIs and the server was added by ID, use the new remove API
 		if minRaftProtocol >= 2 && server.ID == raft.ServerID(parts.ID) {
-			a.logger.WithField("server", server.ID).Info("taskvault: removing server by ID")
+			a.logger.WithField(
+				"server", server.ID,
+			).Info("taskvault: removing server by ID")
 			future := a.raft.RemoveServer(raft.ServerID(parts.ID), 0, 0)
 			if err := future.Error(); err != nil {
 				a.logger.WithError(err).

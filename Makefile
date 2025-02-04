@@ -52,7 +52,7 @@ client:
 
 ui: taskvault/ui-dist
 
-main: taskvault/ui-dist types/taskvault.pb.go types/executor.pb.go *.go */*.go */*/*.go */*/*/*.go
+main: taskvault/ui-dist types/taskvault.pb.go  *.go */*.go */*/*.go */*/*/*.go
 	GOBIN=`pwd` go install ./builtin/...
 	go mod tidy
 	go build main.go
