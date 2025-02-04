@@ -22,10 +22,14 @@ func (a *Agent) nodeJoin(me serf.MemberEvent) {
 	for _, m := range me.Members {
 		ok, parts := isServer(m)
 		if !ok {
-			a.logger.WithField("member", m.Name).Warn("non-server in gossip pool")
+			a.logger.WithField(
+				"member", m.Name,
+			).Warn("non-server in gossip pool")
 			continue
 		}
-		a.logger.WithField("server", parts.Name).Info("Adding LAN adding server")
+		a.logger.WithField(
+			"server", parts.Name,
+		).Info("Adding LAN adding server")
 		a.serverLookup.AddServer(parts)
 		// Check if this server is known
 		found := false
@@ -101,7 +105,9 @@ func (a *Agent) maybeBootstrap() {
 			return
 		}
 		if p.Bootstrap {
-			a.logger.WithField("member", member).Error("peer has bootstrap mode. Expect disabled")
+			a.logger.WithField(
+				"member", member,
+			).Error("peer has bootstrap mode. Expect disabled")
 			return
 		}
 		if valid {
@@ -124,7 +130,8 @@ func (a *Agent) maybeBootstrap() {
 			configuration, err := a.GRPCClient.RaftGetConfiguration(server.RPCAddr.String())
 			if err != nil {
 				nextRetry := (1 << attempt) * time.Second
-				a.logger.Error("Failed to confirm peer status for server (will retry).",
+				a.logger.Error(
+					"Failed to confirm peer status for server (will retry).",
 					"server", server.Name,
 					"retry_interval", nextRetry.String(),
 					"error", err,
@@ -138,17 +145,6 @@ func (a *Agent) maybeBootstrap() {
 			}
 		}
 
-		// Found a node with some Raft peers, stop bootstrap since there's
-		// evidence of an existing cluster. We should get folded in by the
-		// existing servers if that's the case, so it's cleaner to sit as a
-		// candidate with no peers so we don't cause spurious elections.
-		// It's OK this is racy, because even with an initial bootstrap
-		// as long as one peer runs bootstrap things will work, and if we
-		// have multiple peers bootstrap in the same way, that's OK. We
-		// just don't want a server added much later to do a live bootstrap
-		// and interfere with the cluster. This isn't required for Raft's
-		// correctness because no server in the existing cluster will vote
-		// for this server, but it makes things much more stable.
 		if len(peers) > 0 {
 			a.logger.Info(
 				"Existing Raft peers reported by server, disabling bootstrap mode",
@@ -160,8 +156,6 @@ func (a *Agent) maybeBootstrap() {
 		}
 	}
 
-	// Update the peer set
-	// Attempt a live bootstrap!
 	var configuration raft.Configuration
 	var addrs []string
 
@@ -177,18 +171,18 @@ func (a *Agent) maybeBootstrap() {
 		}
 		configuration.Servers = append(configuration.Servers, peer)
 	}
-	a.logger.Info("agent: found expected number of peers, attempting to bootstrap cluster...",
-		"peers", strings.Join(addrs, ","))
+	a.logger.Info(
+		"agent: found expected number of peers, attempting to bootstrap cluster...",
+		"peers", strings.Join(addrs, ","),
+	)
 	future := a.raft.BootstrapCluster(configuration)
 	if err := future.Error(); err != nil {
 		a.logger.WithError(err).Error("agent: failed to bootstrap cluster")
 	}
 
-	// Bootstrapping complete, or failed for some reason, don't enter this again
 	a.config.BootstrapExpect = 0
 }
 
-// nodeFailed is used to handle fail events on the serf cluster
 func (a *Agent) nodeFailed(me serf.MemberEvent) {
 	for _, m := range me.Members {
 		ok, parts := isServer(m)
@@ -210,14 +204,12 @@ func (a *Agent) nodeFailed(me serf.MemberEvent) {
 			}
 		}
 
-		// Trim the list there are no known servers in a region
 		if n == 0 {
 			delete(a.peers, parts.Region)
 		} else {
 			a.peers[parts.Region] = existing
 		}
 
-		// Check if local peer
 		if parts.Region == a.config.Region {
 			delete(a.localPeers, raft.ServerAddress(parts.Addr.String()))
 		}
