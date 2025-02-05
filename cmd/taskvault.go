@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/danluki/taskvault/logging"
+	"github.com/danluki/taskvault/pkg/logging"
 	"github.com/danluki/taskvault/taskvault"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

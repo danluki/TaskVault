@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/danluki/taskvault/types"
+	"github.com/danluki/taskvault/pkg/types"
 	"github.com/gin-contrib/expvar"
 	"github.com/hashicorp/go-uuid"
 
@@ -59,9 +59,11 @@ func (h *HTTPTransport) ServeHTTP() {
 		h.UI(rootPath)
 	}
 
-	h.logger.WithFields(logrus.Fields{
-		"address": h.agent.config.HTTPAddr,
-	}).Info("api: Running HTTP server")
+	h.logger.WithFields(
+		logrus.Fields{
+			"address": h.agent.config.HTTPAddr,
+		},
+	).Info("api: Running HTTP server")
 
 	go func() {
 		if err := h.Engine.Run(h.agent.config.HTTPAddr); err != nil {
@@ -71,14 +73,20 @@ func (h *HTTPTransport) ServeHTTP() {
 }
 
 // APIRoutes registers the api routes on the gin RouterGroup.
-func (h *HTTPTransport) APIRoutes(r *gin.RouterGroup, middleware ...gin.HandlerFunc) {
+func (h *HTTPTransport) APIRoutes(
+	r *gin.RouterGroup, middleware ...gin.HandlerFunc,
+) {
 	r.GET("/debug/vars", expvar.Handler())
 
-	h.Engine.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "healthy",
-		})
-	})
+	h.Engine.GET(
+		"/health", func(c *gin.Context) {
+			c.JSON(
+				http.StatusOK, gin.H{
+					"status": "healthy",
+				},
+			)
+		},
+	)
 
 	if h.agent.config.EnablePrometheus {
 		// Prometheus metrics scrape endpoint
@@ -241,7 +249,9 @@ func (h *HTTPTransport) pairPostHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.agent.GRPCClient.CreateValue(pair.Key, pair.Value); err != nil {
+	if _, err := h.agent.GRPCClient.CreateValue(
+		pair.Key, pair.Value,
+	); err != nil {
 		h.logger.Error(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/armon/go-metrics"
-	"github.com/danluki/taskvault/types"
+	types2 "github.com/danluki/taskvault/pkg/types"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
 	"github.com/sirupsen/logrus"
@@ -19,12 +19,12 @@ import (
 
 // TaskvaultGRPCServer defines the basics that a gRPC server should implement.
 type TaskvaultGRPCServer interface {
-	types.TaskvaultServer
+	types2.TaskvaultServer
 	Serve(net.Listener) error
 }
 
 type GRPCServer struct {
-	types.TaskvaultServer
+	types2.TaskvaultServer
 	agent  *Agent
 	logger *logrus.Entry
 }
@@ -38,7 +38,7 @@ func NewGRPCServer(agent *Agent, logger *logrus.Entry) TaskvaultGRPCServer {
 
 func (grpcs *GRPCServer) Serve(lis net.Listener) error {
 	grpcServer := grpc.NewServer()
-	types.RegisterTaskvaultServer(grpcServer, grpcs)
+	types2.RegisterTaskvaultServer(grpcServer, grpcs)
 
 	go grpcServer.Serve(lis)
 
@@ -61,18 +61,22 @@ func Encode(t MessageType, msg interface{}) ([]byte, error) {
 // Subtle: this method shadows the method (TaskvaultServer).CreateValue of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) CreateValue(
 	ctx context.Context,
-	req *types.CreateValueRequest,
-) (*types.CreateValueResponse, error) {
+	req *types2.CreateValueRequest,
+) (*types2.CreateValueResponse, error) {
 	defer metrics.MeasureSince([]string{"grpc", "create_value"}, time.Now())
-	g.logger.WithFields(logrus.Fields{
-		"key": req.Key,
-		"val": req.Value,
-	}).Debug("grpc: Received CreateValue")
+	g.logger.WithFields(
+		logrus.Fields{
+			"key": req.Key,
+			"val": req.Value,
+		},
+	).Debug("grpc: Received CreateValue")
 
-	if err := g.agent.applySetPair(&types.Pair{
-		Key:   req.Key,
-		Value: req.Value,
-	}); err != nil {
+	if err := g.agent.applySetPair(
+		&types2.Pair{
+			Key:   req.Key,
+			Value: req.Value,
+		},
+	); err != nil {
 		return nil, err
 	}
 
@@ -81,7 +85,7 @@ func (g *GRPCServer) CreateValue(
 		return nil, err
 	}
 
-	return &types.CreateValueResponse{
+	return &types2.CreateValueResponse{
 		Key:   req.Key,
 		Value: req.Value,
 	}, nil
@@ -91,12 +95,14 @@ func (g *GRPCServer) CreateValue(
 // Subtle: this method shadows the method (TaskvaultServer).DeleteJob of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) DeleteValue(
 	ctx context.Context,
-	req *types.DeleteValueRequest,
-) (*types.DeleteValueResponse, error) {
+	req *types2.DeleteValueRequest,
+) (*types2.DeleteValueResponse, error) {
 	defer metrics.MeasureSince([]string{"grpc", "delete_value"}, time.Now())
-	g.logger.WithFields(logrus.Fields{
-		"key": req.Key,
-	}).Debug("grpc: Received DeleteValue")
+	g.logger.WithFields(
+		logrus.Fields{
+			"key": req.Key,
+		},
+	).Debug("grpc: Received DeleteValue")
 
 	cmd, err := Encode(DeletePairType, &req)
 	if err != nil {
@@ -114,9 +120,11 @@ func (g *GRPCServer) DeleteValue(
 	}
 
 	res := af.Response()
-	resm, ok := res.(*types.DeleteValueResponse)
+	resm, ok := res.(*types2.DeleteValueResponse)
 	if !ok {
-		return nil, fmt.Errorf("grpc: Error wrong response from apply in DeleteValue: %v", res)
+		return nil, fmt.Errorf(
+			"grpc: Error wrong response from apply in DeleteValue: %v", res,
+		)
 	}
 
 	return resm, nil
@@ -127,7 +135,7 @@ func (g *GRPCServer) DeleteValue(
 func (g *GRPCServer) GetAllPairs(
 	ctx context.Context,
 	req *emptypb.Empty,
-) (*types.GetAllPairsResponse, error) {
+) (*types2.GetAllPairsResponse, error) {
 	defer metrics.MeasureSince([]string{"grpc", "get_all_pairs"}, time.Now())
 	g.logger.Debug("grpc: Received GetAllPairs")
 
@@ -136,15 +144,15 @@ func (g *GRPCServer) GetAllPairs(
 		return nil, err
 	}
 
-	p := make([]*types.Pair, len(pairs))
+	p := make([]*types2.Pair, len(pairs))
 	for i, pair := range pairs {
-		p[i] = &types.Pair{
+		p[i] = &types2.Pair{
 			Key:   pair.Key,
 			Value: pair.Value,
 		}
 	}
 
-	return &types.GetAllPairsResponse{
+	return &types2.GetAllPairsResponse{
 		Pairs: p,
 	}, nil
 }
@@ -153,8 +161,8 @@ func (g *GRPCServer) GetAllPairs(
 // Subtle: this method shadows the method (TaskvaultServer).GetValue of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) GetValue(
 	ctx context.Context,
-	req *types.GetValueRequest,
-) (*types.GetValueResponse, error) {
+	req *types2.GetValueRequest,
+) (*types2.GetValueResponse, error) {
 	defer metrics.MeasureSince([]string{"grpc", "get_value"}, time.Now())
 	g.logger.WithField("job", req.Key).Debug("grpc: Received GetValue")
 
@@ -164,14 +172,16 @@ func (g *GRPCServer) GetValue(
 		return nil, err
 	}
 
-	return &types.GetValueResponse{
+	return &types2.GetValueResponse{
 		Value: pair,
 	}, nil
 }
 
 // Leave implements TaskvaultGRPCServer.
 // Subtle: this method shadows the method (TaskvaultServer).Leave of GRPCServer.TaskvaultServer.
-func (g *GRPCServer) Leave(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
+func (g *GRPCServer) Leave(
+	ctx context.Context, req *emptypb.Empty,
+) (*emptypb.Empty, error) {
 	return req, g.agent.Stop()
 }
 
@@ -180,7 +190,7 @@ func (g *GRPCServer) Leave(ctx context.Context, req *emptypb.Empty) (*emptypb.Em
 func (g *GRPCServer) RaftGetConfiguration(
 	ctx context.Context,
 	req *emptypb.Empty,
-) (*types.RaftGetConfigurationResponse, error) {
+) (*types2.RaftGetConfigurationResponse, error) {
 	// We can't fetch the leader and the configuration atomically with
 	// the current Raft API.
 	future := g.agent.raft.GetConfiguration()
@@ -202,7 +212,7 @@ func (g *GRPCServer) RaftGetConfiguration(
 
 	// Fill out the reply.
 	leader := g.agent.raft.Leader()
-	reply := &types.RaftGetConfigurationResponse{}
+	reply := &types2.RaftGetConfigurationResponse{}
 	reply.Index = future.Index()
 	for _, server := range future.Configuration().Servers {
 		node := "(unknown)"
@@ -214,7 +224,7 @@ func (g *GRPCServer) RaftGetConfiguration(
 			}
 		}
 
-		entry := &types.RaftServer{
+		entry := &types2.RaftServer{
 			Id:           string(server.ID),
 			Node:         node,
 			Address:      string(server.Address),
@@ -231,7 +241,7 @@ func (g *GRPCServer) RaftGetConfiguration(
 // Subtle: this method shadows the method (TaskvaultServer).RaftRemovePeerByID of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) RaftRemovePeerByID(
 	ctx context.Context,
-	req *types.RaftRemovePeerByIDRequest,
+	req *types2.RaftRemovePeerByIDRequest,
 ) (*emptypb.Empty, error) {
 	// Since this is an operation designed for humans to use, we will return
 	// an error if the supplied id isn't among the peers since it's
@@ -246,7 +256,9 @@ func (g *GRPCServer) RaftRemovePeerByID(
 				goto REMOVE
 			}
 		}
-		return nil, fmt.Errorf("id %q was not found in the Raft configuration", req.Id)
+		return nil, fmt.Errorf(
+			"id %q was not found in the Raft configuration", req.Id,
+		)
 	}
 
 REMOVE:
@@ -260,7 +272,9 @@ REMOVE:
 	// pass.
 	future := g.agent.raft.RemoveServer(raft.ServerID(req.Id), 0, 0)
 	if err := future.Error(); err != nil {
-		g.logger.WithError(err).WithField("peer", req.Id).Warn("failed to remove Raft peer")
+		g.logger.WithError(err).WithField(
+			"peer", req.Id,
+		).Warn("failed to remove Raft peer")
 		return nil, err
 	}
 
@@ -272,8 +286,8 @@ REMOVE:
 // Subtle: this method shadows the method (TaskvaultServer).UpdateValue of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) UpdateValue(
 	ctx context.Context,
-	req *types.UpdateValueRequest,
-) (*types.UpdateValueResponse, error) {
+	req *types2.UpdateValueRequest,
+) (*types2.UpdateValueResponse, error) {
 	panic("unimplemented")
 }
 

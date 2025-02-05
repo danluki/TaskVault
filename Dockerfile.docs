@@ -1,0 +1,17 @@
+FROM node:23.3-alpine
+
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+COPY docs/package.json docs/pnpm-lock.yaml ./
+
+RUN pnpm install
+
+COPY docs .
+
+RUN pnpm run build
+
+EXPOSE 4321
+
+CMD ["pnpm", "run", "preview"]

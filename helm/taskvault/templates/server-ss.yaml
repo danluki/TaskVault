@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "taskvault.fullname" . }}-server
+  labels:
+    {{- include "taskvault.serverLabels" . | nindent 4 }}
+spec:
+  podManagementPolicy: Parallel
+  {{- if not .Values.server.autoscaling.enabled }}
+  replicas: {{ .Values.server.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "taskvault.serverSelectorLabels" . | nindent 6 }}
+  serviceName: {{ include "taskvault.fullname" . }}
+  template:
+    metadata:
+      annotations:
+      {{- with .Values.server.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if eq .Values.image.pullPolicy "Always" }}
+        uuid: {{ uuidv4 }}
+      {{- end }}
+      labels:
+        {{- include "taskvault.serverSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "taskvault.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.server.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.server.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/local/bin/taskvault"]
+          args:
+            - "agent"
+            - "--server"
+            - "--config=/etc/taskvault/taskvault.yaml"
+            - "--data-dir=/taskvault"
+            - "--retry-join=\"provider=k8s label_selector=\"\"app.kubernetes.io/instance={{ .Release.Name }}\"\" namespace=\"\"{{ .Release.Namespace }}\"\"\""
+            - "--log-level={{ .Values.server.log.level }}"
+            - "--bootstrap-expect={{ include  "taskvault.bootstrapExpect" . }}"
+          volumeMounts:
+            - name: "data"
+              mountPath: "/taskvault"
+          ports:
+            -   name: http
+                containerPort: 8080
+            -   name: serf
+                containerPort: 8946
+            -   name: grpc
+                containerPort: 6868
+          lifecycle:
+            preStop:
+              exec:
+                command: ["./taskvault", "leave"]
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "taskvault.fullname" . }}-envs
+          readinessProbe:
+            httpGet:
+              path: /v1/leader
+              port: 8080
+            failureThreshold: 2
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 5
+      {{- with .Values.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.server.persistence.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.server.persistence.size }}

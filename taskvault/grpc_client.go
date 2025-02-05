@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/danluki/taskvault/types"
+	types2 "github.com/danluki/taskvault/pkg/types"
 	metrics "github.com/hashicorp/go-metrics"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -19,7 +19,7 @@ type TaskvaultGRPCClient interface {
 	GetAllValues() ([]Pair, error)
 	DeleteValue(string) error
 	Leave(string) error
-	RaftGetConfiguration(string) (*types.RaftGetConfigurationResponse, error)
+	RaftGetConfiguration(string) (*types2.RaftGetConfigurationResponse, error)
 	RaftRemovePeerByID(string, string) error
 }
 
@@ -69,24 +69,30 @@ func (grpcc *GRPCClient) CreateValue(key string, value string) (*Pair, error) {
 	// Initiate a connection with the server
 	conn, err := grpcc.Connect(string(addr))
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "CreateValue",
-			"server_addr": addr,
-		}).Error("grpc: error dialing.")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "CreateValue",
+				"server_addr": addr,
+			},
+		).Error("grpc: error dialing.")
 		return nil, err
 	}
 	defer conn.Close()
 
-	d := types.NewTaskvaultClient(conn)
-	resp, err := d.CreateValue(context.Background(), &types.CreateValueRequest{
-		Key:   key,
-		Value: value,
-	})
+	d := types2.NewTaskvaultClient(conn)
+	resp, err := d.CreateValue(
+		context.Background(), &types2.CreateValueRequest{
+			Key:   key,
+			Value: value,
+		},
+	)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "GetValue",
-			"server_addr": addr,
-		}).Error("grpc: Error calling gRPC method")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "GetValue",
+				"server_addr": addr,
+			},
+		).Error("grpc: Error calling gRPC method")
 		return nil, err
 	}
 
@@ -114,22 +120,29 @@ func (grpcc *GRPCClient) GetValue(addr, key string) (*Pair, error) {
 	// Initiate a connection with the server
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "GetJob",
-			"server_addr": addr,
-		}).Error("grpc: error dialing.")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "GetJob",
+				"server_addr": addr,
+			},
+		).Error("grpc: error dialing.")
 		return nil, err
 	}
 	defer conn.Close()
 
-	d := types.NewTaskvaultClient(conn)
-	resp, err := d.GetValue(context.Background(), &types.GetValueRequest{
-		Key: key})
+	d := types2.NewTaskvaultClient(conn)
+	resp, err := d.GetValue(
+		context.Background(), &types2.GetValueRequest{
+			Key: key,
+		},
+	)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "GetValue",
-			"server_addr": addr,
-		}).Error("grpc: Error calling gRPC method")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "GetValue",
+				"server_addr": addr,
+			},
+		).Error("grpc: Error calling gRPC method")
 		return nil, err
 	}
 
@@ -146,22 +159,26 @@ func (grpcc *GRPCClient) Leave(addr string) error {
 	// Initiate a connection with the server
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "Leave",
-			"server_addr": addr,
-		}).Error("grpc: error dialing.")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "Leave",
+				"server_addr": addr,
+			},
+		).Error("grpc: error dialing.")
 		return err
 	}
 	defer conn.Close()
 
 	// Synchronous call
-	d := types.NewTaskvaultClient(conn)
+	d := types2.NewTaskvaultClient(conn)
 	_, err = d.Leave(context.Background(), &emptypb.Empty{})
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "Leave",
-			"server_addr": addr,
-		}).Error("grpc: Error calling gRPC method")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "Leave",
+				"server_addr": addr,
+			},
+		).Error("grpc: Error calling gRPC method")
 		return err
 	}
 
@@ -175,24 +192,29 @@ func (grpcc *GRPCClient) RaftRemovePeerByID(addr string, peerID string) error {
 	// Initiate a connection with the server
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "RaftRemovePeerByID",
-			"server_addr": addr,
-		}).Error("grpc: error dialing.")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "RaftRemovePeerByID",
+				"server_addr": addr,
+			},
+		).Error("grpc: error dialing.")
 		return err
 	}
 	defer conn.Close()
 
 	// Synchronous call
-	d := types.NewTaskvaultClient(conn)
-	_, err = d.RaftRemovePeerByID(context.Background(),
-		&types.RaftRemovePeerByIDRequest{Id: peerID},
+	d := types2.NewTaskvaultClient(conn)
+	_, err = d.RaftRemovePeerByID(
+		context.Background(),
+		&types2.RaftRemovePeerByIDRequest{Id: peerID},
 	)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "RaftRemovePeerByID",
-			"server_addr": addr,
-		}).Error("grpc: Error calling gRPC method")
+		grpcc.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "RaftRemovePeerByID",
+				"server_addr": addr,
+			},
+		).Error("grpc: Error calling gRPC method")
 		return err
 	}
 
@@ -207,28 +229,32 @@ func (grpcc *GRPCClient) UpdateValue(string, string) (*Pair, error) {
 // RaftGetConfiguration implements TaskvaultGRPCServer.
 func (g *GRPCClient) RaftGetConfiguration(
 	addr string,
-) (*types.RaftGetConfigurationResponse, error) {
+) (*types2.RaftGetConfigurationResponse, error) {
 	var conn *grpc.ClientConn
 
 	// Initiate a connection with the server
 	conn, err := g.Connect(addr)
 	if err != nil {
-		g.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "RaftGetConfiguration",
-			"server_addr": addr,
-		}).Error("grpc: error dialing.")
+		g.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "RaftGetConfiguration",
+				"server_addr": addr,
+			},
+		).Error("grpc: error dialing.")
 		return nil, err
 	}
 	defer conn.Close()
 
 	// Synchronous call
-	d := types.NewTaskvaultClient(conn)
+	d := types2.NewTaskvaultClient(conn)
 	res, err := d.RaftGetConfiguration(context.Background(), &emptypb.Empty{})
 	if err != nil {
-		g.logger.WithError(err).WithFields(logrus.Fields{
-			"method":      "RaftGetConfiguration",
-			"server_addr": addr,
-		}).Error("grpc: Error calling gRPC method")
+		g.logger.WithError(err).WithFields(
+			logrus.Fields{
+				"method":      "RaftGetConfiguration",
+				"server_addr": addr,
+			},
+		).Error("grpc: Error calling gRPC method")
 		return nil, err
 	}
 

@@ -42,7 +42,7 @@ taskvault/ui-dist: ui/node_modules ui/public/* ui/src/* ui/src/*/*
 	rm -rf taskvault/ui-dist
 	cd ui; bun run build --out-dir ../taskvault/ui-dist
 
-proto: types/taskvault.pb.go
+proto: pkg/types
 
 types/%.pb.go: proto/%.proto
 	protoc -I proto/ --go_out=types --go_opt=paths=source_relative --go-grpc_out=types --go-grpc_opt=paths=source_relative $<
@@ -52,7 +52,7 @@ client:
 
 ui: taskvault/ui-dist
 
-main: taskvault/ui-dist types/taskvault.pb.go  *.go */*.go */*/*.go */*/*/*.go
+main: taskvault/ui-dist pkg/types  *.go */*.go */*/*.go */*/*/*.go
 	GOBIN=`pwd` go install ./builtin/...
 	go mod tidy
 	go build main.go

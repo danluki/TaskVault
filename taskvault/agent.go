@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/armon/go-metrics"
-	"github.com/danluki/taskvault/types"
+	"github.com/danluki/taskvault/pkg/types"
 	"github.com/hashicorp/memberlist"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"

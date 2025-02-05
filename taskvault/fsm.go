@@ -3,7 +3,7 @@ package taskvault
 import (
 	"io"
 
-	"github.com/danluki/taskvault/types"
+	"github.com/danluki/taskvault/pkg/types"
 	"github.com/hashicorp/raft"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"

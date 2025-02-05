@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "taskvault.fullname" . }}-test-connection"
+  labels:
+    {{- include "taskvault.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "taskvault.fullname" . }}:{{ .Values.server.service.port }}']
+  restartPolicy: Never
