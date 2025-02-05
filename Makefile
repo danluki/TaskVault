@@ -12,6 +12,8 @@ clean:
 	rm -rf tmp
 	rm -rf ui-dist
 	rm -rf ui/build
+	rm -rf node-ui/dist
+	rm -rf node-ui/node_modules
 	rm -rf ui/node_modules
 	GOBIN=`pwd` go clean -i ./builtin/...
 	GOBIN=`pwd` go clean
@@ -33,14 +35,14 @@ updatetestcert:
 	openssl pkcs12 -in badssl.com-client.p12 -nokeys -passin pass:badssl.com -out plugin/http/testdata/badssl.com-client.pem
 	rm badssl.com-client.p12
 
-ui/node_modules: ui/package.json
-	cd ui; bun install
+node-ui/node_modules: node-ui/package.json
+	cd node-ui; bun install
 	# touch the directory so Make understands it is up to date
 	touch ui/node_modules
 
-taskvault/ui-dist: ui/node_modules ui/public/* ui/src/* ui/src/*/*
+taskvault/ui-dist: node-ui/node_modules node-ui/public/* node-ui/src/* node-ui/src/*/*
 	rm -rf taskvault/ui-dist
-	cd ui; bun run build --out-dir ../taskvault/ui-dist
+	cd node-ui; bun run build --out-dir ../taskvault/ui-dist
 
 proto: pkg/types
 
@@ -52,8 +54,7 @@ client:
 
 ui: taskvault/ui-dist
 
-main: taskvault/ui-dist pkg/types  *.go */*.go */*/*.go */*/*/*.go
-	GOBIN=`pwd` go install ./builtin/...
+main: taskvault/ui-dist pkg/types  *.go */*.go */*/*.go
 	go mod tidy
 	go build main.go
 

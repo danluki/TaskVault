@@ -4,7 +4,6 @@ go 1.23.3
 
 require (
 	github.com/armon/go-metrics v0.4.1
-	github.com/devopsfaith/krakend-usage v1.4.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/expvar v1.0.1
 	github.com/gin-gonic/gin v1.10.0
@@ -51,7 +50,6 @@ require (
 	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
-	github.com/catalinc/hashcash v0.0.0-20161205220751-e6bc29ff4de9 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect

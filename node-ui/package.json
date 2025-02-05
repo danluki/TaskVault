@@ -9,13 +9,37 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.5.13"
+    "@icon-park/vue-next": "^1.4.2",
+    "@tailwindcss/vite": "^4.0.3",
+    "@vee-validate/zod": "^4.15.0",
+    "@vueuse/core": "^12.5.0",
+    "axios": "^1.7.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "radix-vue": "^1.9.13",
+    "tailwind-merge": "^3.0.1",
+    "vee-validate": "^4.15.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@iconify-json/radix-icons": "^1.2.2",
+    "@iconify/vue": "^4.3.0",
+    "@radix-icons/vue": "^1.0.0",
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@types/node": "^22.13.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
+    "autoprefixer": "^10.4.20",
+    "lucide-vue-next": "^0.474.0",
+    "postcss": "^8.5.1",
+    "shadcn-vue": "^0.11.3",
+    "tailwindcss": "3.4.3",
+    "tailwindcss-animate": "1.0.7",
     "typescript": "~5.6.2",
     "vite": "^6.0.5",
     "vue-tsc": "^2.2.0"
-  }
+  },
+  "packageManager": "pnpm@10.2.0+sha512.0d27364e0139c6aadeed65ada153135e0ca96c8da42123bd50047f961339dc7a758fc2e944b428f52be570d1bd3372455c1c65fa2e7aa0bfbf931190f9552001"
 }

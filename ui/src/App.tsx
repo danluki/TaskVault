@@ -23,7 +23,7 @@ declare global {
 const history = createHashHistory();
 
 export const App = () => (
-  <Admin dashboard={Dashboard} dataProvider={dataProvider} layout={Layout}>
+  <Admin dashboard={Dashboard} dataProvider={dataProvider} layout={Layout as any}>
     <Resource name="storage" {...pairs} />
     <Resource name="members" />
     <CustomRoutes>

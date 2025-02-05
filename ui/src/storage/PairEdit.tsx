@@ -15,7 +15,7 @@ import { JsonInput } from "react-admin-json-view";
 export const PairEdit = () => {
   const record = useRecordContext();
   return (
-    <Edit {...record}>
+    <Edit {...record as any}>
       <EditForm />
     </Edit>
   );

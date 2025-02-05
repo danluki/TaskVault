@@ -1,30 +1,35 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import Toaster from '@/components/ui/toast/Toaster.vue'
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
+  <Toaster/>
+  <router-view />
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  /* width: 100%; */
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+::-webkit-scrollbar {
+  background-color: #71717a;
+  border-radius: 10px;
+  width: 5px;
+  height:5px;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #71717a;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+  background: #fff;
 }
 </style>
