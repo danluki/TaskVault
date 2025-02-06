@@ -38,12 +38,12 @@ spec:
             {{- toYaml .Values.server.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/usr/local/bin/taskvault"]
+          command: ["/usr/local/bin/syncra"]
           args:
             - "agent"
             - "--server"
-            - "--config=/etc/taskvault/taskvault.yaml"
-            - "--data-dir=/taskvault"
+            - "--config=/etc/syncra/syncra.yaml"
+            - "--data-dir=/syncra"
             - "--retry-join=\"provider=k8s label_selector=\"\"app.kubernetes.io/instance={{ .Release.Name }}\"\" namespace=\"\"{{ .Release.Namespace }}\"\"\""
             - "--log-level={{ .Values.server.log.level }}"
             - "--bootstrap-expect={{ include  "taskvault.bootstrapExpect" . }}"
@@ -60,7 +60,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["./taskvault", "leave"]
+                command: ["./syncra", "leave"]
           resources:
             {{- toYaml .Values.server.resources | nindent 12 }}
           envFrom:

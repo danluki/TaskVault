@@ -670,7 +670,6 @@ func selectNodes(
 	}
 
 	for ; cardinality > 0; cardinality-- {
-		// Select a node
 		chosenIndex := selectFunc(nodes[:numNodes])
 
 		nodes[numNodes-1], nodes[chosenIndex] = nodes[chosenIndex], nodes[numNodes-1]

@@ -1,7 +1,7 @@
 # Default values for taskvault. Replace this based on your needs.
 image:
   repository: danluki/taskvault
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: ""
   pullSecretName: ""
 
