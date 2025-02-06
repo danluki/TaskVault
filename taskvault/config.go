@@ -125,7 +125,7 @@ type Config struct {
 const (
 	DefaultBindPort      int           = 8946
 	DefaultRPCPort       int           = 6868
-	DefaultRetryInterval time.Duration = 30 * time.Second
+	DefaultRetryInterval time.Duration = 15 * time.Second
 )
 
 var ErrResolvingHost = errors.New("error resolving hostname")
@@ -139,8 +139,10 @@ func DefaultConfig() *Config {
 	tags := map[string]string{}
 
 	return &Config{
-		NodeName:             hostname,
-		BindAddr:             fmt.Sprintf("{{ GetPrivateIP }}:%d", DefaultBindPort),
+		NodeName: hostname,
+		BindAddr: fmt.Sprintf(
+			"{{ GetPrivateIP }}:%d", DefaultBindPort,
+		),
 		HTTPAddr:             ":8080",
 		Profile:              "lan",
 		LogLevel:             "info",
@@ -161,33 +163,52 @@ func ConfigFlagSet() *flag.FlagSet {
 	cmdFlags := flag.NewFlagSet("agent flagset", flag.ContinueOnError)
 
 	cmdFlags.Bool("server", false, "This node is running in server mode")
-	cmdFlags.String("node-name", c.NodeName,
-		"Name of this node. Must be unique in the cluster")
-	cmdFlags.String("bind-addr", c.BindAddr,
+	cmdFlags.String(
+		"node-name", c.NodeName,
+		"Name of this node. Must be unique in the cluster",
+	)
+	cmdFlags.String(
+		"bind-addr", c.BindAddr,
 		`Specifies which address the agent should bind to for network services, 
 including the internal gossip protocol and RPC mechanism. This should be 
 specified in IP format, and can be used to easily bind all network services 
 to the same address. The value supports go-sockaddr/template format.
-`)
-	cmdFlags.String("advertise-addr", "",
+`,
+	)
+	cmdFlags.String(
+		"advertise-addr", "",
 		`Address used to advertise to other nodes in the cluster. By default,
 the bind address is advertised. The value supports 
-go-sockaddr/template format.`)
-	cmdFlags.String("http-addr", c.HTTPAddr,
+go-sockaddr/template format.`,
+	)
+	cmdFlags.String(
+		"http-addr", c.HTTPAddr,
 		`Address to bind the UI web server to. Only used when server. The value 
-supports go-sockaddr/template format.`)
-	cmdFlags.String("profile", c.Profile,
-		"Profile is used to control the timing profiles used")
-	cmdFlags.StringSlice("join", []string{},
-		"An initial agent to join with. This flag can be specified multiple times")
-	cmdFlags.StringSlice("retry-join", []string{},
+supports go-sockaddr/template format.`,
+	)
+	cmdFlags.String(
+		"profile", c.Profile,
+		"Profile is used to control the timing profiles used",
+	)
+	cmdFlags.StringSlice(
+		"join", []string{},
+		"An initial agent to join with. This flag can be specified multiple times",
+	)
+	cmdFlags.StringSlice(
+		"retry-join", []string{},
 		`Address of an agent to join at start time with retries enabled. 
-Can be specified multiple times.`)
-	cmdFlags.Int("retry-max", 0,
-		`Maximum number of join attempts. Defaults to 0, which will retry indefinitely.`)
-	cmdFlags.String("retry-interval", DefaultRetryInterval.String(),
-		"Time to wait between join attempts.")
-	cmdFlags.Int("raft-multiplier", c.RaftMultiplier,
+Can be specified multiple times.`,
+	)
+	cmdFlags.Int(
+		"retry-max", 0,
+		`Maximum number of join attempts. Defaults to 0, which will retry indefinitely.`,
+	)
+	cmdFlags.String(
+		"retry-interval", DefaultRetryInterval.String(),
+		"Time to wait between join attempts.",
+	)
+	cmdFlags.Int(
+		"raft-multiplier", c.RaftMultiplier,
 		`An integer multiplier used by servers to scale key Raft timing parameters.
 Omitting this value or setting it to 0 uses default timing described below. 
 Lower values are used to tighten timing and increase sensitivity while higher 
@@ -199,49 +220,76 @@ servers, currently equivalent to setting this to a value of 5 (this default
 may be changed in future versions of taskvault, depending if the target minimum 
 server profile changes). Setting this to a value of 1 will configure Raft to 
 its highest-performance mode is recommended for production taskvault servers. 
-The maximum allowed value is 10.`)
-	cmdFlags.StringSlice("tag", []string{},
+The maximum allowed value is 10.`,
+	)
+	cmdFlags.StringSlice(
+		"tag", []string{},
 		`Tag can be specified multiple times to attach multiple key/value tag pairs 
-to the given node, specified as key=value`)
-	cmdFlags.String("encrypt", "",
-		"Key for encrypting network traffic. Must be a base64-encoded 16-byte key")
-	cmdFlags.String("log-level", c.LogLevel,
-		"Log level (debug|info|warn|error|fatal|panic)")
-	cmdFlags.Int("rpc-port", c.RPCPort,
+to the given node, specified as key=value`,
+	)
+	cmdFlags.String(
+		"encrypt", "",
+		"Key for encrypting network traffic. Must be a base64-encoded 16-byte key",
+	)
+	cmdFlags.String(
+		"log-level", c.LogLevel,
+		"Log level (debug|info|warn|error|fatal|panic)",
+	)
+	cmdFlags.Int(
+		"rpc-port", c.RPCPort,
 		`RPC Port used to communicate with clients. Only used when server. 
-The RPC IP Address will be the same as the bind address.`)
-	cmdFlags.Int("advertise-rpc-port", 0,
-		"Use the value of rpc-port by default")
-	cmdFlags.Int("bootstrap-expect", 0,
+The RPC IP Address will be the same as the bind address.`,
+	)
+	cmdFlags.Int(
+		"advertise-rpc-port", 0,
+		"Use the value of rpc-port by default",
+	)
+	cmdFlags.Int(
+		"bootstrap-expect", 0,
 		`Provides the number of expected servers in the datacenter. Either this value 
 should not be provided or the value must agree with other servers in the 
 cluster. When provided, taskvault waits until the specified number of servers are 
 available and then bootstraps the cluster. This allows an initial leader to be 
-elected automatically. This flag requires server mode.`)
-	cmdFlags.String("data-dir", c.DataDir,
+elected automatically. This flag requires server mode.`,
+	)
+	cmdFlags.String(
+		"data-dir", c.DataDir,
 		`Specifies the directory to use for server-specific data, including the 
 replicated log. By default, this is the top-level data-dir, 
-like [/var/lib/taskvault]`)
-	cmdFlags.String("datacenter", c.Datacenter,
+like [/var/lib/taskvault]`,
+	)
+	cmdFlags.String(
+		"datacenter", c.Datacenter,
 		`Specifies the data center of the local agent. All members of a datacenter 
-should share a local LAN connection.`)
-	cmdFlags.String("region", c.Region,
+should share a local LAN connection.`,
+	)
+	cmdFlags.String(
+		"region", c.Region,
 		`Specifies the region the taskvault agent is a member of. A region typically maps 
 to a geographic region, for example us, with potentially multiple zones, which 
-map to datacenters such as us-west and us-east`)
-	cmdFlags.String("serf-reconnect-timeout", c.SerfReconnectTimeout,
+map to datacenters such as us-west and us-east`,
+	)
+	cmdFlags.String(
+		"serf-reconnect-timeout", c.SerfReconnectTimeout,
 		`This is the amount of time to attempt to reconnect to a failed node before 
 giving up and considering it completely gone. In Kubernetes, you might need 
 this to about 5s, because there is no reason to try reconnects for default 
 24h value. Also Raft behaves oddly if node is not reaped and returned with 
 same ID, but different IP.
-Format there: https://golang.org/pkg/time/#ParseDuration`)
-	cmdFlags.Bool("bootstrap", false,
-		"Bootstrap the cluster.")
-	cmdFlags.Bool("ui", true,
-		"Enable the web UI on this node. The node must be server.")
+Format there: https://golang.org/pkg/time/#ParseDuration`,
+	)
+	cmdFlags.Bool(
+		"bootstrap", false,
+		"Bootstrap the cluster.",
+	)
+	cmdFlags.Bool(
+		"ui", true,
+		"Enable the web UI on this node. The node must be server.",
+	)
 
-	cmdFlags.Bool("enable-prometheus", true, "Enable serving prometheus metrics")
+	cmdFlags.Bool(
+		"enable-prometheus", true, "Enable serving prometheus metrics",
+	)
 
 	return cmdFlags
 }
@@ -263,7 +311,9 @@ func (c *Config) normalizeAddrs() error {
 		c.HTTPAddr = ipStr
 	}
 
-	addr, err := normalizeAdvertise(c.AdvertiseAddr, c.BindAddr, DefaultBindPort, c.DevMode)
+	addr, err := normalizeAdvertise(
+		c.AdvertiseAddr, c.BindAddr, DefaultBindPort, c.DevMode,
+	)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to parse advertise address (%v, %v, %v, %v): %w",
@@ -282,7 +332,9 @@ func (c *Config) normalizeAddrs() error {
 func ParseSingleIPTemplate(ipTmpl string) (string, error) {
 	out, err := template.Parse(ipTmpl)
 	if err != nil {
-		return "", fmt.Errorf("unable to parse address template %q: %v", ipTmpl, err)
+		return "", fmt.Errorf(
+			"unable to parse address template %q: %v", ipTmpl, err,
+		)
 	}
 
 	ips := strings.Split(out, " ")
@@ -292,14 +344,20 @@ func ParseSingleIPTemplate(ipTmpl string) (string, error) {
 	case 1:
 		return ips[0], nil
 	default:
-		return "", fmt.Errorf("multiple addresses found (%q), please configure one", out)
+		return "", fmt.Errorf(
+			"multiple addresses found (%q), please configure one", out,
+		)
 	}
 }
 
-func normalizeAdvertise(addr string, bind string, defport int, dev bool) (string, error) {
+func normalizeAdvertise(
+	addr string, bind string, defport int, dev bool,
+) (string, error) {
 	addr, err := ParseSingleIPTemplate(addr)
 	if err != nil {
-		return "", fmt.Errorf("Error parsing advertise address template: %v", err)
+		return "", fmt.Errorf(
+			"Error parsing advertise address template: %v", err,
+		)
 	}
 
 	if addr != "" {
@@ -307,7 +365,9 @@ func normalizeAdvertise(addr string, bind string, defport int, dev bool) (string
 		_, _, err = net.SplitHostPort(addr)
 		if err != nil {
 			if !isMissingPort(err) && !isTooManyColons(err) {
-				return "", fmt.Errorf("Error parsing advertise address %q: %v", addr, err)
+				return "", fmt.Errorf(
+					"Error parsing advertise address %q: %v", addr, err,
+				)
 			}
 
 			// missing port, append the default
@@ -320,7 +380,7 @@ func normalizeAdvertise(addr string, bind string, defport int, dev bool) (string
 	// TODO: Revisit this as the lookup doesn't work with IP addresses
 	ips, err := net.LookupIP(bind)
 	if err != nil {
-		return "", ErrResolvingHost //fmt.Errorf("Error resolving bind address %q: %v", bind, err)
+		return "", ErrResolvingHost // fmt.Errorf("Error resolving bind address %q: %v", bind, err)
 	}
 
 	// Return the first non-localhost unicast address
@@ -342,7 +402,9 @@ func normalizeAdvertise(addr string, bind string, defport int, dev bool) (string
 	// Bind is not localhost but not a valid advertise IP, use first private IP
 	addr, err = ParseSingleIPTemplate("{{ GetPrivateIP }}")
 	if err != nil {
-		return "", fmt.Errorf("unable to parse default advertise address: %v", err)
+		return "", fmt.Errorf(
+			"unable to parse default advertise address: %v", err,
+		)
 	}
 	return net.JoinHostPort(addr, strconv.Itoa(defport)), nil
 }
