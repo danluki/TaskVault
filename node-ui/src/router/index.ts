@@ -1,13 +1,22 @@
 import {createRouter, createWebHistory} from 'vue-router'
-import {getUser} from "../utils";
+import {getUser} from "@/utils";
 
 const routes = [
     {
         path: '/',
-        name: 'Dashboard',
+        name: 'Home',
         component: () => import("@/views/Home.vue"),
         children: [
-
+            {
+                path: '/dashboard',
+                name: 'Dashboard',
+                component: () => import("@/views/dashboard/Dashboard.vue")
+            },
+            {
+                path: '/storage',
+                name: 'Storage',
+                component: () => import("@/views/storage/Storage.vue")
+            }
         ],
     },
     {
@@ -30,9 +39,15 @@ router.beforeEach((to, _, next) => {
         isAuth = true
     }
 
+    if (to.name === undefined) {
+        next({name: 'Login'})
+    }
+
     if (!isAuth && to.name !== 'Login') next({ name: 'Login' })
-    else if(isAuth && (to.name == 'Login')) next({ name: 'Dashboard'})
+    else if(isAuth && (to.name == 'Login')) next({ name: 'Home'})
     else next()
+
+
 })
 
 export default router

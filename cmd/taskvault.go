@@ -19,9 +19,9 @@ var rpcAddr string
 var ip string
 
 var taskvaultCmd = &cobra.Command{
-	Use:   "taskvault",
-	Short: "Open source distributed job scheduling system",
-	Long:  "Task value is a system service that runs scheduled jobs at given intervals or times, just like the unix cron service but distributed in several machines in a cluster. If a machine fails (the leader), a follower will take over and keep running the scheduled jobs without human intervention.",
+	Use:   "syncra",
+	Short: "Open source distributed core",
+	Long:  "Syncra is a open soucre distributed core that will makes your high availability stateful setups possible.",
 }
 
 func Execute() {

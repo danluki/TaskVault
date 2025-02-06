@@ -7,8 +7,7 @@ import { useToast } from '@/components/ui/toast/use-toast'
 
 import { reactive, h } from 'vue'
 import {useRouter} from "vue-router";
-import {USER_LS_KEY} from "@/consts";
-import {type User} from "@/utils"
+import {setUser, type User} from "@/utils"
 import { User as UserIcon, RectangleEllipsis } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -17,7 +16,10 @@ const user = reactive<User>({ Username: "", Password: "" })
 
 const login = () => {
   if (user.Username === "admin" && user.Password === "admin") {
-    localStorage.setItem(USER_LS_KEY, JSON.stringify(user))
+    setUser({
+      Username: "admin",
+      Password: "admin",
+    })
     toast({
       description: 'Login successfully.',
     });
@@ -45,7 +47,7 @@ const login = () => {
     <div class="flex h-full justify-center items-center">
       <div class="h-max min-w-[16rem] w-1/4 max-w-[24rem] text-center">
         <div class="inline-flex mt-4 mb-8 items-center">
-          <img src="../../assets/syncra.png" class="h-12 mr-2" />
+          <img src="../../../../docs/src/assets/syncra.png" class="h-12 mr-2" />
           <h1 class="font-bold text-4xl font-mono">Syncra</h1>
         </div>
 

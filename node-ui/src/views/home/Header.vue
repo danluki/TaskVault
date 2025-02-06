@@ -33,10 +33,10 @@ const toggleDropdown = () => {
 
 <template>
   <header>
-    <div class="flex h-full w-full justify-center items-center">
+    <div class="flex h-full w-full justify-center items-center p-2">
       <div class="w-[25%]">
         <router-link to="/" class="flex text-center items-center">
-          <img class="w-[2.5rem] mx-[0.5rem]" src="../../assets/syncra.png" alt="" />
+          <img class="w-[2.5rem] mx-[0.5rem]" src="../../../../docs/src/assets/syncra.png" alt="" />
           <span class="font-bold font-mono text-2xl pl-[0.5rem]">Syncra</span>
         </router-link>
       </div>

@@ -1,0 +1,1 @@
+import{d as r,x as o,C as n,u as t,h as c,b as d,o as l}from"./index-CMT-UV0u.js";const m=r({__name:"Card",props:{class:{}},setup(s){const e=s;return(a,p)=>(l(),o("div",{class:n(t(c)("rounded-xl border bg-card text-card-foreground shadow",e.class))},[d(a.$slots,"default")],2))}});export{m as _};
