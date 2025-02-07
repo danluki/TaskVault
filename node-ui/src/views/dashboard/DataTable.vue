@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
   VisibilityState,
 } from '@tanstack/vue-table'
 
@@ -18,11 +16,7 @@ import {
 import {
   FlexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table'
 import { ref } from 'vue'
@@ -56,6 +50,7 @@ const table = useVueTable({
 
 <template>
   <div class="space-y-4">
+    <DataTableToolbar :table="table" />
     <div class="rounded-md border">
       <Table>
         <TableHeader>

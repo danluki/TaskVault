@@ -23,7 +23,7 @@ const login = () => {
     toast({
       description: 'Login successfully.',
     });
-    router.push('/')
+    router.push('/dashboard')
   } else {
     toast({
       title: 'Uh oh! Something went wrong.',
@@ -47,7 +47,7 @@ const login = () => {
     <div class="flex h-full justify-center items-center">
       <div class="h-max min-w-[16rem] w-1/4 max-w-[24rem] text-center">
         <div class="inline-flex mt-4 mb-8 items-center">
-          <img src="../../../../docs/src/assets/syncra.png" class="h-12 mr-2" />
+          <img src="../../assets/syncra.png" class="h-12 mr-2"  alt="Logo"/>
           <h1 class="font-bold text-4xl font-mono">Syncra</h1>
         </div>
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {Card} from "@/components/ui/card";
 import { IconGitBranch } from "@tabler/icons-vue";
-import { defineProps } from "vue";
+import {defineProps} from "vue";
 
 defineProps<{
     leaderName?: string,

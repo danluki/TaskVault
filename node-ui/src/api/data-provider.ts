@@ -33,21 +33,24 @@ type GetManyReferenceResponse<T> = {
     total: number;
 }
 
-export const getManyReference = async <T>(resource: string, params: GetManyReferenceParams): Promise<GetManyReferenceResponse<T>> => {
-    const { page, perPage } = params.pagination;
-    const { field, order }= params.sort;
+export const getManyReference = async <T>(resource: string, params?: GetManyReferenceParams): Promise<GetManyReferenceResponse<T>> => {
+    let url = `${apiUrl}/${resource}`;
+    if (params) {
+        const { page, perPage } = params.pagination;
+        const { field, order }= params.sort;
 
-    const query = {
-        ...params.filter,
-        [params.target]: params.id,
-        _sort: field,
-        _order: order,
-        _start: (page - 1) * perPage,
-        _end: page * perPage,
-        output_size_limit: 200,
+        const query = {
+            ...params.filter,
+            [params.target]: params.id,
+            _sort: field,
+            _order: order,
+            _start: (page - 1) * perPage,
+            _end: page * perPage,
+            output_size_limit: 200,
+        }
+
+        url = `${apiUrl}/${params.target}/${params.id}/${resource}?${queryString.stringify(query)}`;
     }
-
-    const url = `${apiUrl}/${params.target}/${params.id}/${resource}?${queryString.stringify(query)}`;
 
     try {
         const response = await httpClient.get<T[]>(url);

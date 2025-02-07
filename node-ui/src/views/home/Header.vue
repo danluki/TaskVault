@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { SettingOne, Logout, SunOne, GithubOne, Me } from '@icon-park/vue-next';
+import { SettingOne, Logout, SunOne, Me } from '@icon-park/vue-next';
 import {useToast} from "@/components/ui/toast";
 import {logoutUser} from "@/utils";
 import {useRouter} from "vue-router";
 import {ref} from "vue";
+import { useColorMode } from '@vueuse/core'
+import { BarChart, Database, LayoutDashboard } from "lucide-vue-next";
+const mode = useColorMode()
 import {
   DropdownMenu,
-  DropdownMenuContent,
+  DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
+import {
+  NavigationMenu, NavigationMenuLink
+} from "@/components/ui/navigation-menu";
+import {Button} from "@/components/ui/button";
+import {Icon} from "@iconify/vue";
 
 const {toast} = useToast()
 const router = useRouter()
@@ -32,64 +39,89 @@ const toggleDropdown = () => {
 </script>
 
 <template>
-  <header>
-    <div class="flex h-full w-full justify-center items-center p-2">
-      <div class="w-[25%]">
-        <router-link to="/" class="flex text-center items-center">
-          <img class="w-[2.5rem] mx-[0.5rem]" src="../../../../docs/src/assets/syncra.png" alt="" />
-          <span class="font-bold font-mono text-2xl pl-[0.5rem]">Syncra</span>
-        </router-link>
-      </div>
-      <div class="w-[58%] flex flex-col items-end">
-<!--        <nav class="font-bold">-->
-<!--          <ul class="flex space-x-4">-->
-<!--            <li>-->
-<!--              <router-link to="/" class="text-black">Home</router-link>-->
-<!--            </li>-->
-<!--            <li>-->
-<!--              <router-link to="/docs" class="text-black">Document</router-link>-->
-<!--            </li>-->
-<!--            <li>-->
-<!--              <router-link to="/posts" class="text-black">Post</router-link>-->
-<!--            </li>-->
-<!--          </ul>-->
-<!--        </nav>-->
-      </div>
-      <div class="w-[17%] flex justify-end space-x-4 pr-[1rem]">
-        <button class="flex items-center justify-center">
+  <header class="flex h-full w-full justify-center items-center p-2">
+    <div class="w-[47%]">
+      <router-link to="/dashboard" class="flex text-center items-center">
+        <img class="w-[2.5rem] mx-[0.5rem]" src="../../assets/syncra.png" alt="" />
+        <span class="font-bold font-mono text-2xl pl-[0.5rem]">Syncra</span>
+      </router-link>
+    </div>
+    <div class="w-[60%] flex items-center space-x-4">
+      <NavigationMenu class="hidden lg:flex">
+        <NavigationMenuList class="flex space-x-6">
+          <NavigationMenuLink>
+            <router-link to="/dashboard" class="flex items-center space-x-2">
+              <LayoutDashboard class="h-5 w-5" />
+              <span>Dashboard</span>
+            </router-link>
+          </NavigationMenuLink>
+          <NavigationMenuLink>
+            <router-link to="/storage" class="flex items-center space-x-2">
+              <Database class="h-5 w-5" />
+              <span>Storage</span>
+            </router-link>
+          </NavigationMenuLink>
+          <NavigationMenuLink>
+            <router-link to="/metrics" class="flex items-center space-x-2">
+              <BarChart class="h-5 w-5" />
+              <span>Metrics</span>
+            </router-link>
+          </NavigationMenuLink>
+        </NavigationMenuList>
+      </NavigationMenu>
+    </div>
+      <div class="w-[17%] flex justify-end space-x-2 pr-[1rem]">
+        <Button variant="outline" class="flex items-center justify-center">
           <a href="https://github.com/danluki/TaskVault" target="_blank">
-            <github-one theme="outline" size="18" :fill="['#333']" />
+            <svg width="25" height="25" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.49933 0.25C3.49635 0.25 0.25 3.49593 0.25 7.50024C0.25 10.703 2.32715 13.4206 5.2081 14.3797C5.57084 14.446 5.70302 14.2222 5.70302 14.0299C5.70302 13.8576 5.69679 13.4019 5.69323 12.797C3.67661 13.235 3.25112 11.825 3.25112 11.825C2.92132 10.9874 2.44599 10.7644 2.44599 10.7644C1.78773 10.3149 2.49584 10.3238 2.49584 10.3238C3.22353 10.375 3.60629 11.0711 3.60629 11.0711C4.25298 12.1788 5.30335 11.8588 5.71638 11.6732C5.78225 11.205 5.96962 10.8854 6.17658 10.7043C4.56675 10.5209 2.87415 9.89918 2.87415 7.12104C2.87415 6.32925 3.15677 5.68257 3.62053 5.17563C3.54576 4.99226 3.29697 4.25521 3.69174 3.25691C3.69174 3.25691 4.30015 3.06196 5.68522 3.99973C6.26337 3.83906 6.8838 3.75895 7.50022 3.75583C8.1162 3.75895 8.73619 3.83906 9.31523 3.99973C10.6994 3.06196 11.3069 3.25691 11.3069 3.25691C11.7026 4.25521 11.4538 4.99226 11.3795 5.17563C11.8441 5.68257 12.1245 6.32925 12.1245 7.12104C12.1245 9.9063 10.4292 10.5192 8.81452 10.6985C9.07444 10.9224 9.30633 11.3648 9.30633 12.0413C9.30633 13.0102 9.29742 13.7922 9.29742 14.0299C9.29742 14.2239 9.42828 14.4496 9.79591 14.3788C12.6746 13.4179 14.75 10.7025 14.75 7.50024C14.75 3.49593 11.5036 0.25 7.49933 0.25Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" style="--darkreader-inline-fill: currentColor;" data-darkreader-inline-fill=""></path></svg>
           </a>
-        </button>
-        <ThemeSwitcher/>
-        <div class="relative">
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline">
+              <Icon icon="radix-icons:moon" class="h-full rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Icon icon="radix-icons:sun" class="h-full absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span class="sr-only">Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem @click="mode = 'light'">
+              Light
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="mode = 'dark'">
+              Dark
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="mode = 'auto'">
+              System
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <button class="flex items-center justify-center" @click="toggleDropdown">
-                <me theme="two-tone" size="18" :fill="['#333', '#50e3c2']" />
-              </button>
+              <Button variant="outline" class="flex items-center justify-center" @click="toggleDropdown">
+                <me size="25" />
+              </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-
+            <DropdownMenuContent class="mr-2">
+              <DropdownMenuItem>
+                <div class="flex items-center text-center text-lg font-bold mt-[1rem] mb-[0.5rem] mx-4">
+                  <SunOne theme="two-tone" size="24" :fill="['#333', '#f8e71c']" />
+                  <span class="ml-2">Hi admin</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <div class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center space-x-2">
+                  <SettingOne /> <span>Settings</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <div @click="logout" class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center space-x-2">
+                  <Logout /> <span>Logout</span>
+                </div>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div v-if="dropdownOpen"  class="absolute right-0 bg-white shadow-lg mt-2 rounded-lg w-48 p-2">
-            <div class="flex items-center text-center text-lg font-bold mt-[1rem] mb-[0.5rem] mx-4">
-              <SunOne theme="two-tone" size="24" :fill="['#333', '#f8e71c']" />
-              <span class="ml-2">Hi admin</span>
-            </div>
-            <ul>
-              <li class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center space-x-2">
-                <SettingOne /> <span>Settings</span>
-              </li>
-              <li @click="logout" class="px-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center space-x-2">
-                <Logout /> <span>Logout</span>
-              </li>
-            </ul>
-          </div>
         </div>
-      </div>
-    </div>
   </header>
 </template>
 
