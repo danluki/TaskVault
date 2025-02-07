@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
-  NavigationMenu, NavigationMenuLink
+  NavigationMenu, NavigationMenuLink, NavigationMenuList
 } from "@/components/ui/navigation-menu";
 import {Button} from "@/components/ui/button";
 import {Icon} from "@iconify/vue";

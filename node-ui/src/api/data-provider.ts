@@ -15,41 +15,24 @@ type Pagination = {
     perPage: number;
 }
 
-type Sort = {
-    field: string;
-    order: string;
-}
-
-type GetManyReferenceParams = {
-    pagination: Pagination;
-    sort: Sort;
-    filter: Record<string, any>;
-    target: string;
-    id: string | number;
-}
 
 type GetManyReferenceResponse<T> = {
     data: T[];
     total: number;
 }
 
-export const getManyReference = async <T>(resource: string, params?: GetManyReferenceParams): Promise<GetManyReferenceResponse<T>> => {
+export const getManyReference = async <T>(resource: string, params?: Pagination): Promise<GetManyReferenceResponse<T>> => {
     let url = `${apiUrl}/${resource}`;
     if (params) {
-        const { page, perPage } = params.pagination;
-        const { field, order }= params.sort;
+        const { page, perPage } = params;
 
         const query = {
-            ...params.filter,
-            [params.target]: params.id,
-            _sort: field,
-            _order: order,
-            _start: (page - 1) * perPage,
-            _end: page * perPage,
+            _start: page * perPage,
+            _end: (page + 1) * perPage,
             output_size_limit: 200,
         }
 
-        url = `${apiUrl}/${params.target}/${params.id}/${resource}?${queryString.stringify(query)}`;
+        url = `${apiUrl}/${resource}?${queryString.stringify(query)}`;
     }
 
     try {

@@ -2,12 +2,16 @@
 import { ref, watchEffect, computed } from "vue";
 import axios from "axios";
 import {apiUrl} from "@/api/data-provider.ts"
-import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import Table from "@/components/table.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import { Plus, PackageOpen } from "lucide-vue-next";
 import type {PairInfo} from "@/views/storage/schema.ts";
+import Pagination from "@/components/pagination.vue";
+import {
+  useStorageTable
+} from "@/views/storage/composables/use-storage-table.ts";
 
 
 // Reactive state for pagination and sorting
@@ -19,26 +23,27 @@ const totalItems = ref(0);
 const tagsData = ref<Array<Record<string, string>>>([]); // Store fetched tags
 
 // Fetch data function
-const fetchData = async () => {
-  try {
-    const response = await axios.get(apiUrl, {
-      params: {
-        _page: page.value,
-        _limit: pageSize.value,
-        _sort: sortBy.value,
-        _order: sortOrder.value,
-      },
-    });
-
-    tagsData.value = response.data;
-    totalItems.value = parseInt(response.headers["x-total-count"], 10) || 0;
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-};
-
-// Fetch data when pagination, sorting, or page size changes
-watchEffect(fetchData);
+// const fetchData = async () => {
+//   console.log(`${apiUrl}/storage`)
+//   try {
+//     const response = await axios.get(`${apiUrl}/storage`, {
+//       params: {
+//         _page: page.value,
+//         _limit: pageSize.value,
+//         _sort: sortBy.value,
+//         _order: sortOrder.value,
+//       },
+//     });
+//
+//     tagsData.value = response.data;
+//     totalItems.value = parseInt(response.headers["x-total-count"], 10) || 0;
+//   } catch (error) {
+//     console.error("Error fetching data:", error);
+//   }
+// };
+//
+// // Fetch data when pagination, sorting, or page size changes
+// watchEffect(fetchData);
 
 // Computed values for pagination
 const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
@@ -59,6 +64,8 @@ const storageValues = ref<PairInfo[]>([]);
 const addPair = async () => {
 
 }
+
+const storageTable = useStorageTable()
 </script>
 
 <template>
@@ -80,10 +87,20 @@ const addPair = async () => {
     <Card>
       <CardHeader>Storage</CardHeader>
       <CardContent>
-        <div v-if="storageValues.length === 0" class="h-[400px] flex items-center justify-center p-4">
-          <PackageOpen class="w-6 h-6 mr-2" />
-          Storage is empty
-        </div>
+        <Pagination :total="storageTable.totalPairs.value"
+                    :table="storageTable.table"
+                    :pagination="storageTable.pagination.value"
+                    @update:page="(page) => storageTable.pagination.value.pageIndex = page"
+                    @update:page-size="(pageSize) => storageTable.pagination.value.pageSize = pageSize"
+        />
+        <Table :table="storageTable.table" :is-loading="storageTable.isLoading.value">
+          <template #empty-message>
+            <div class="flex items-center justify-center h-[400px]">
+              <PackageOpen class="w-6 h-6 mr-2" />
+              Storage is empty
+            </div>
+          </template>
+        </Table>
       </CardContent>
     </Card>
   </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {RefreshCcw} from "lucide-vue-next";
@@ -19,11 +19,21 @@ const fetchMetrics = async () => {
   }
 };
 
-// Auto-refresh every 10 seconds
+let intervalId: number | null = null;
+
 onMounted(() => {
   fetchMetrics();
-  setInterval(fetchMetrics, 10000);
+  intervalId = setInterval(fetchMetrics, 10000) as unknown as number;
 });
+
+onUnmounted(() => {
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+});
+
+
 </script>
 
 <template>
