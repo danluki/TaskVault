@@ -32,6 +32,7 @@
     "@radix-icons/vue": "^1.0.0",
     "@tabler/icons-vue": "^3.29.0",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.13.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",

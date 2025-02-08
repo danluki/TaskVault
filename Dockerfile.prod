@@ -9,6 +9,6 @@ EXPOSE 8080 8946
 
 ENV SHELL /bin/bash
 
-COPY syncra /usr/local/bin/
+COPY ./bin/syncra /usr/local/bin/
 
 CMD ["/usr/local/bin/syncra"]

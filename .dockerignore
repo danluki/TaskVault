@@ -11,3 +11,4 @@ taskvault-*
 main
 *.data
 node_modules
+taskvault.*

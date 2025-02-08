@@ -38,7 +38,7 @@ updatetestcert:
 node-ui/node_modules: node-ui/package.json
 	cd node-ui; bun install
 	# touch the directory so Make understands it is up to date
-	touch ui/node_modules
+	touch node-ui/node_modules
 
 taskvault/ui-dist: node-ui/node_modules node-ui/public/* node-ui/src/* node-ui/src/*/*
 	rm -rf taskvault/ui-dist

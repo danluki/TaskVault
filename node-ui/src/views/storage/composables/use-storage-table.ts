@@ -3,9 +3,6 @@ import {
     getCoreRowModel,
     getFacetedRowModel,
     getFacetedUniqueValues,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
     useVueTable,
 } from '@tanstack/vue-table'
 import {createGlobalState} from '@vueuse/core'
@@ -43,7 +40,7 @@ export const useStorageTable = createGlobalState(() => {
         perPage: pagination.value.pageSize,
     }));
 
-    watchEffect(async () => {
+    const fetchData = async () =>  {
         loading.value = true;
         error.value = null;
         try {
@@ -58,7 +55,9 @@ export const useStorageTable = createGlobalState(() => {
         } finally {
             loading.value = false;
         }
-    });
+    }
+
+    watchEffect(fetchData);
 
 
     const tableColumns = computed<ColumnDef<PairInfo>[]>(() => [
@@ -106,12 +105,12 @@ export const useStorageTable = createGlobalState(() => {
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
     })
-
     return {
         isLoading: loading,
         table,
         totalPairs,
         pagination,
         setPagination,
+        fetchData,
     }
 })

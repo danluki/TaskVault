@@ -42,6 +42,28 @@ func (h *HTTPTransport) UI(r *gin.RouterGroup) {
 		},
 	)
 
+	r.GET(
+		"/storage", func(c *gin.Context) {
+			switch c.NegotiateFormat(gin.MIMEHTML) {
+			case gin.MIMEHTML:
+				c.Redirect(http.StatusSeeOther, "/ui/storage")
+			default:
+				c.AbortWithStatus(http.StatusNotFound)
+			}
+		},
+	)
+
+	r.GET(
+		"/dashboard", func(c *gin.Context) {
+			switch c.NegotiateFormat(gin.MIMEHTML) {
+			case gin.MIMEHTML:
+				c.Redirect(http.StatusSeeOther, "/ui/dashboard")
+			default:
+				c.AbortWithStatus(http.StatusNotFound)
+			}
+		},
+	)
+
 	ui := r.Group("/" + uiPathPrefix)
 
 	assets, err := fs.Sub(uiDist, "ui-dist")

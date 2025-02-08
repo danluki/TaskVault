@@ -1,71 +1,70 @@
 <script setup lang="ts">
-import { ref, watchEffect, computed } from "vue";
-import axios from "axios";
-import {apiUrl} from "@/api/data-provider.ts"
+import {h, ref} from "vue";
 import Table from "@/components/table.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import { Plus, PackageOpen } from "lucide-vue-next";
-import type {PairInfo} from "@/views/storage/schema.ts";
 import Pagination from "@/components/pagination.vue";
 import {
   useStorageTable
 } from "@/views/storage/composables/use-storage-table.ts";
+import {ToastAction, useToast} from "@/components/ui/toast";
 
-
-// Reactive state for pagination and sorting
-const page = ref(1);
-const pageSize = ref(10);
-const sortBy = ref("dc"); // Default sorting column
-const sortOrder = ref("asc"); // "asc" or "desc"
-const totalItems = ref(0);
-const tagsData = ref<Array<Record<string, string>>>([]); // Store fetched tags
-
-// Fetch data function
-// const fetchData = async () => {
-//   console.log(`${apiUrl}/storage`)
-//   try {
-//     const response = await axios.get(`${apiUrl}/storage`, {
-//       params: {
-//         _page: page.value,
-//         _limit: pageSize.value,
-//         _sort: sortBy.value,
-//         _order: sortOrder.value,
-//       },
-//     });
-//
-//     tagsData.value = response.data;
-//     totalItems.value = parseInt(response.headers["x-total-count"], 10) || 0;
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//   }
-// };
-//
-// // Fetch data when pagination, sorting, or page size changes
-// watchEffect(fetchData);
-
-// Computed values for pagination
-const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value));
-
-// Pagination handlers
-const nextPage = () => {
-  if (page.value < totalPages.value) page.value++;
-};
-
-const prevPage = () => {
-  if (page.value > 1) page.value--;
-};
 
 const keyInput = ref("");
 const valueInput = ref("");
-const storageValues = ref<PairInfo[]>([]);
-
-const addPair = async () => {
-
-}
+const {toast} = useToast()
 
 const storageTable = useStorageTable()
+
+const addPair = async () => {
+  if (!keyInput.value || !valueInput.value) {
+    toast({
+      variant: 'destructive',
+      description: 'Key and Value must not be empty.',
+    });
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:8080/v1/storage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        key: keyInput.value,
+        value: valueInput.value,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    toast({
+      description: 'Pair added successfully.',
+    });
+
+    keyInput.value = "";
+    valueInput.value = "";
+    storageTable.pagination.value.pageIndex = storageTable.pagination.value.pageIndex - 1
+    storageTable.pagination.value.pageIndex = storageTable.pagination.value.pageIndex + 1
+  } catch (error) {
+    toast({
+      title: 'Uh oh! Something went wrong.',
+      description: 'Some error occured.',
+      variant: 'destructive',
+      action: h(ToastAction, {
+        altText: 'Try again',
+      }, {
+        default: () => 'Try again',
+      }),
+    });
+  }
+}
+
 </script>
 
 <template>

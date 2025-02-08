@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-const props = defineProps<{
+defineProps<{
   table: Table<T>
   isLoading: boolean
   hideHeader?: boolean
