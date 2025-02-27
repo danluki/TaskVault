@@ -1,0 +1,36 @@
+---
+title: Syncra - Distributed core for your needs.
+description: D.
+template: splash
+hero:
+  tagline: Next generation core based on Raft.
+  image:
+    file: ../../../assets/syncra.png
+  actions:
+    - text: Get started
+      link: /en/basics/01-getting-started/
+      icon: right-arrow
+    - text: To Syncra
+      link: https://syncra.danluki.dev
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Next steps
+
+<CardGrid stagger>
+		<Card title="Try basic application" icon="pencil">
+    		Use `minikube` to [try](/en/guides/minikube).
+    	</Card>
+    	<Card title="Create configuration based on example" icon="add-document">
+    		Description of [Syncra.yaml](/guides/en/configuring).
+    	</Card>
+    	<Card title="Configuring Helm charts" icon="setting">
+    		Use our [Helm Chart](/guides/en/configuring) to your business needs.
+    	</Card>
+    	<Card title="Deep dive" icon="open-book">
+    		Internals deep dive and [contributing](/en/basics).
+    	</Card>
+</CardGrid>
