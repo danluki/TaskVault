@@ -27,7 +27,7 @@ require (
 	github.com/tidwall/buntdb v1.3.2
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
