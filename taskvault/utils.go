@@ -9,11 +9,6 @@ import (
 	"github.com/hashicorp/serf/serf"
 )
 
-var (
-	// projectURL is the project URL.
-	projectURL = "https://taskvault.io/"
-)
-
 type int64arr []int64
 
 func (a int64arr) Len() int           { return len(a) }
@@ -36,7 +31,6 @@ type ServerParts struct {
 	Status       serf.MemberStatus
 }
 
-
 func (s *ServerParts) String() string {
 	return fmt.Sprintf("%s (Addr: %s) (DC: %s)",
 		s.Name, s.Addr, s.Datacenter)
@@ -49,7 +43,7 @@ func (s *ServerParts) Copy() *ServerParts {
 }
 
 func UserAgent() string {
-	return fmt.Sprintf("taskvault/%s (+%s;)", Version, projectURL)
+	return fmt.Sprintf("taskvault/%s", Version)
 }
 
 func isServer(m serf.Member) (bool, *ServerParts) {

@@ -17,6 +17,11 @@ const (
 	UpdatePairType
 )
 
+type Pair struct {
+	Key   string
+	Value string
+}
+
 type LogApplier func(buf []byte, index uint64) interface{}
 
 type LogAppliers map[MessageType]LogApplier

@@ -437,17 +437,6 @@ func (a *Agent) IsLeader() bool {
 	return a.raft.State() == raft.Leader
 }
 
-func (a *Agent) Members() []serf.Member {
-	return a.serf.Members()
-}
-
-func (a *Agent) LocalMember() serf.Member {
-	return a.serf.LocalMember()
-}
-
-func (a *Agent) Leader() raft.ServerAddress {
-	return a.raft.Leader()
-}
 
 func (a *Agent) Servers() (members []*ServerParts) {
 	for _, member := range a.serf.Members() {

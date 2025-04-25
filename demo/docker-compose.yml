@@ -26,13 +26,3 @@ services:
     environment:
       - GODEBUG=netdns=go
     command: taskvault agent --server --retry-join=taskvault:8946 --log-level=debug  --node-name=taskvault3 --tag server=2
-  taskvault-docs:
-    build:
-      context: ..
-      dockerfile: ../Dockerfile.docs
-    container_name: astro-docs
-    ports:
-      - "4321:4321"
-    volumes:
-      - ./docs:/app
-    restart: unless-stopped

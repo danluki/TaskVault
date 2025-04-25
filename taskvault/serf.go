@@ -225,6 +225,7 @@ func (a *Agent) lanNodeUpdate(me serf.MemberEvent) {
 		}
 		a.logger.WithField("server", parts.String()).Info("Updating LAN server")
 
+
 		a.serverLookup.AddServer(parts)
 	}
 }
