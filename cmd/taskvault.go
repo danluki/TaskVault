@@ -57,19 +57,6 @@ func initConfig() error {
 		return fmt.Errorf("config: Error unmarshalling config: %s", err)
 	}
 
-	cliTags := viper.GetStringSlice("tag")
-	var tags map[string]string
-
-	if len(cliTags) > 0 {
-		tags, err = UnmarshalTags(cliTags)
-		if err != nil {
-			return fmt.Errorf("config: Error unmarshalling cli tags: %s", err)
-		}
-	} else {
-		tags = viper.GetStringMapString("tags")
-	}
-
-	config.Tags = tags
 
 	taskvault.InitLogger(viper.GetString("log-level"), config.NodeName)
 

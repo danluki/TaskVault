@@ -38,7 +38,6 @@ type Agent struct {
 	config     *Config
 	eventCh    chan serf.Event
 	shutdownCh chan struct{}
-	ready      bool
 
 	raftTransport *raft.NetworkTransport
 	raft          *raft.Raft
@@ -131,7 +130,6 @@ func (a *Agent) Start() error {
 	}
 
 	go a.eventLoop()
-	a.ready = true
 
 	return nil
 }
@@ -295,7 +293,6 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	serfConfig := serf.DefaultConfig()
 	serfConfig.Init()
 
-	serfConfig.Tags = a.config.Tags
 	serfConfig.Tags["version"] = Version
 	if a.config.Bootstrap {
 		serfConfig.Tags["bootstrap"] = "1"
@@ -321,7 +318,6 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	serfConfig.MemberlistConfig.AdvertisePort = advertisePort
 	serfConfig.MemberlistConfig.SecretKey = encryptKey
 	serfConfig.NodeName = config.NodeName
-	serfConfig.Tags = config.Tags
 	serfConfig.CoalescePeriod = 3 * time.Second
 	serfConfig.QuiescentPeriod = time.Second
 	serfConfig.UserCoalescePeriod = 3 * time.Second
@@ -353,13 +349,6 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	return serf, nil
 }
 
-func (a *Agent) Config() *Config {
-	return a.config
-}
-
-func (a *Agent) SetConfig(c *Config) {
-	a.config = c
-}
 
 func (a *Agent) StartServer() {
 	if a.Store == nil {
@@ -433,19 +422,6 @@ func (a *Agent) Servers() (members []*ServerParts) {
 			continue
 		}
 		members = append(members, parts)
-	}
-	return members
-}
-
-func (a *Agent) LocalServers() (members []*ServerParts) {
-	for _, member := range a.serf.Members() {
-		ok, parts := isServer(member)
-		if !ok || member.Status != serf.StatusAlive {
-			continue
-		}
-
-		members = append(members, parts)
-
 	}
 	return members
 }

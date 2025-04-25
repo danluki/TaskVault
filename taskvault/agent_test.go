@@ -107,7 +107,6 @@ func TestEncrypt(t *testing.T) {
 	c := DefaultConfig()
 	c.BindAddr = ip1.String()
 	c.NodeName = "test1"
-	c.Tags = map[string]string{"role": "test"}
 	c.EncryptKey = "kPpdjphiipNSsjd4QHWbkA=="
 	c.LogLevel = logLevel
 	c.DevMode = true
@@ -135,7 +134,6 @@ func Test_advertiseRPCAddr(t *testing.T) {
 	c.BindAddr = a1Addr + ":5000"
 	c.AdvertiseAddr = "8.8.8.8"
 	c.NodeName = "test1"
-	c.Tags = map[string]string{"role": "test"}
 	c.LogLevel = logLevel
 	c.DevMode = true
 	c.DataDir = dir
@@ -165,7 +163,6 @@ func Test_bindRPCAddr(t *testing.T) {
 	c := DefaultConfig()
 	c.BindAddr = a1Addr + ":5000"
 	c.NodeName = "test1"
-	c.Tags = map[string]string{"role": "test"}
 	c.LogLevel = logLevel
 	c.DevMode = true
 	c.DataDir = dir
