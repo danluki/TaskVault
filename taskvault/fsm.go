@@ -9,7 +9,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// MessageType is the type to encode FSM commands.
 type MessageType uint8
 
 const (
@@ -18,21 +17,16 @@ const (
 	UpdatePairType
 )
 
-// LogApplier is the definition of a function that can apply a Raft log
 type LogApplier func(buf []byte, index uint64) interface{}
 
-// LogAppliers is a mapping of the Raft MessageType to the appropriate log
-// applier
 type LogAppliers map[MessageType]LogApplier
 
 type taskvaultFSM struct {
 	store Storage
 
-	// proAppliers holds the set of pro only LogAppliers
 	logger *logrus.Entry
 }
 
-// NewFSM is used to construct a new FSM with a blank state
 func newFSM(store Storage, logger *logrus.Entry) *taskvaultFSM {
 	return &taskvaultFSM{
 		store:  store,
@@ -40,7 +34,6 @@ func newFSM(store Storage, logger *logrus.Entry) *taskvaultFSM {
 	}
 }
 
-// Apply applies a Raft log entry to the key-value store.
 func (d *taskvaultFSM) Apply(l *raft.Log) interface{} {
 	buf := l.Data
 	msgType := MessageType(buf[0])
@@ -102,16 +95,10 @@ func (d *taskvaultFSM) applyUpdatePair(buf []byte) interface{} {
 	return nil
 }
 
-// Snapshot returns a snapshot of the key-value store. We wrap
-// the things we need in taskvaultSnapshot and then send that over to Persist.
-// Persist encodes the needed data from taskvaultSnapshot and transport it to
-// Restore where the necessary data is replicated into the finite state machine.
-// This allows the consensus algorithm to truncate the replicated log.
 func (d *taskvaultFSM) Snapshot() (raft.FSMSnapshot, error) {
 	return &taskvaultSnapshot{store: d.store}, nil
 }
 
-// Restore stores the key-value store to a previous state.
 func (d *taskvaultFSM) Restore(r io.ReadCloser) error {
 	defer r.Close()
 	return d.store.Restore(r)
@@ -127,7 +114,6 @@ func (d *taskvaultSnapshot) Persist(sink raft.SnapshotSink) error {
 		return err
 	}
 
-	// Close the sink.
 	if err := sink.Close(); err != nil {
 		return err
 	}

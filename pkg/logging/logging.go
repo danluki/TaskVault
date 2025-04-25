@@ -9,7 +9,6 @@ import (
 
 type LogSplitter struct{}
 
-// Levels returns levels that are supported by the hook
 func (l *LogSplitter) Levels() []logrus.Level {
 	return []logrus.Level{
 		logrus.PanicLevel,
@@ -22,7 +21,6 @@ func (l *LogSplitter) Levels() []logrus.Level {
 	}
 }
 
-// Fire handles logging events based on log levels.
 func (l *LogSplitter) Fire(entry *logrus.Entry) error {
 	if entry == nil {
 		return fmt.Errorf("logrus entry is nil")

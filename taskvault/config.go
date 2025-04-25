@@ -18,84 +18,45 @@ import (
 )
 
 type Config struct {
-	// NodeName is the name we register as. Defaults to hostname.
 	NodeName string `mapstructure:"node-name"`
 
-	// BindAddr is the address on which all of taskvault's services will
-	// be bound. If not specified, this defaults to the first private ip address.
 	BindAddr string `mapstructure:"bind-addr"`
 
-	// HTTPAddr is the address on the UI web server will
-	// be bound. If not specified, this defaults to all interfaces.
 	HTTPAddr string `mapstructure:"http-addr"`
 
-	// Profile is used to select a timing profile for Serf. The supported choices
-	// are "wan", "lan", and "local". The default is "lan"
+	// Profile for serf: wan, lan, local
 	Profile string
 
-	// AdvertiseAddr is the address that the Serf and gRPC layer will advertise to
-	// other members of the cluster. Can be used for basic NAT traversal
-	// where both the internal ip:port and external ip:port are known.
 	AdvertiseAddr string `mapstructure:"advertise-addr"`
 
-	// Tags are used to attach key/value metadata to a node.
 	Tags map[string]string `mapstructure:"tags"`
 
-	// EncryptKey is the secret key to use for encrypting communication
-	// traffic for Serf. The secret key must be exactly 32-bytes, base64
-	// encoded. The easiest way to do this on Unix machines is this command:
-	// "head -c32 /dev/urandom | base64" or use "taskvault keygen". If this is
-	// not specified, the traffic will not be encrypted.
 	EncryptKey string `mapstructure:"encrypt"`
 
-	// StartJoin is a list of addresses to attempt to join when the
-	// agent starts. If Serf is unable to communicate with any of these
-	// addresses, then the agent will error and exit.
 	StartJoin []string `mapstructure:"join"`
 
-	// RetryJoinLAN is a list of addresses to attempt to join when the
-	// agent starts. Serf will continue to retry the join until it
-	// succeeds or RetryMaxAttempts is reached.
 	RetryJoinLAN []string `mapstructure:"retry-join"`
 
-	// RetryMaxAttemptsLAN is used to limit the maximum attempts made
-	// by RetryJoin to reach other nodes. If this is 0, then no limit
-	// is imposed, and Serf will continue to try forever. Defaults to 0.
 	RetryJoinMaxAttemptsLAN int `mapstructure:"retry-max"`
 
-	// RetryIntervalLAN is the string retry interval. This interval
-	// controls how often we retry the join for RetryJoin. This defaults
-	// to 30 seconds.
 	RetryJoinIntervalLAN time.Duration `mapstructure:"retry-interval"`
 
-	// RPCPort is the gRPC port used by taskvault. This should be reachable
-	// by the other servers and clients.
 	RPCPort int `mapstructure:"rpc-port"`
 
-	// AdvertiseRPCPort is the gRPC port advertised to clients. This should be reachable
-	// by the other servers and clients.
 	AdvertiseRPCPort int `mapstructure:"advertise-rpc-port"`
 
-	// LogLevel is the log verbosity level used.
-	// It can be (debug|info|warn|error|fatal|panic).
 	LogLevel string `mapstructure:"log-level"`
 
-	// Datacenter is the datacenter this taskvault server belongs to.
+	// Doesnt work for now
 	Datacenter string
 
-	// Region is the region this taskvault server belongs to.
+	// Doesnt work for now
 	Region string
 
-	// Bootstrap mode is used to bring up the first taskvault server.  It is
-	// required so that it can elect a leader without any other nodes
-	// being present
 	Bootstrap bool
 
-	// BootstrapExpect tries to automatically bootstrap the taskvault cluster,
-	// by withholding peers until enough servers join.
 	BootstrapExpect int `mapstructure:"bootstrap-expect"`
 
-	// DataDir is the directory to store our state in
 	DataDir string `mapstructure:"data-dir"`
 
 	// DevMode is used for development purposes only and limits the
@@ -169,67 +130,47 @@ func ConfigFlagSet() *flag.FlagSet {
 	)
 	cmdFlags.String(
 		"bind-addr", c.BindAddr,
-		`Specifies which address the agent should bind to for network services, 
-including the internal gossip protocol and RPC mechanism. This should be 
-specified in IP format, and can be used to easily bind all network services 
-to the same address. The value supports go-sockaddr/template format.
-`,
+		``,
 	)
 	cmdFlags.String(
 		"advertise-addr", "",
-		`Address used to advertise to other nodes in the cluster. By default,
-the bind address is advertised. The value supports 
-go-sockaddr/template format.`,
+		``,
 	)
 	cmdFlags.String(
 		"http-addr", c.HTTPAddr,
-		`Address to bind the UI web server to. Only used when server. The value 
-supports go-sockaddr/template format.`,
+		``,
 	)
 	cmdFlags.String(
 		"profile", c.Profile,
-		"Profile is used to control the timing profiles used",
+		"",
 	)
 	cmdFlags.StringSlice(
 		"join", []string{},
-		"An initial agent to join with. This flag can be specified multiple times",
+		"",
 	)
 	cmdFlags.StringSlice(
 		"retry-join", []string{},
-		`Address of an agent to join at start time with retries enabled. 
-Can be specified multiple times.`,
+		``,
 	)
 	cmdFlags.Int(
 		"retry-max", 0,
-		`Maximum number of join attempts. Defaults to 0, which will retry indefinitely.`,
+		``,
 	)
 	cmdFlags.String(
 		"retry-interval", DefaultRetryInterval.String(),
-		"Time to wait between join attempts.",
+		"",
 	)
 	cmdFlags.Int(
 		"raft-multiplier", c.RaftMultiplier,
-		`An integer multiplier used by servers to scale key Raft timing parameters.
-Omitting this value or setting it to 0 uses default timing described below. 
-Lower values are used to tighten timing and increase sensitivity while higher 
-values relax timings and reduce sensitivity. Tuning this affects the time it 
-takes to detect leader failures and to perform leader elections, at the expense 
-of requiring more network and CPU resources for better performance. By default, 
-taskvault will use a lower-performance timing that's suitable for minimal taskvault 
-servers, currently equivalent to setting this to a value of 5 (this default 
-may be changed in future versions of taskvault, depending if the target minimum 
-server profile changes). Setting this to a value of 1 will configure Raft to 
-its highest-performance mode is recommended for production taskvault servers. 
-The maximum allowed value is 10.`,
+		``,
 	)
 	cmdFlags.StringSlice(
 		"tag", []string{},
-		`Tag can be specified multiple times to attach multiple key/value tag pairs 
-to the given node, specified as key=value`,
+		`Tags key=value`,
 	)
 	cmdFlags.String(
 		"encrypt", "",
-		"Key for encrypting network traffic. Must be a base64-encoded 16-byte key",
+		"16 bytes value",
 	)
 	cmdFlags.String(
 		"log-level", c.LogLevel,
@@ -237,8 +178,7 @@ to the given node, specified as key=value`,
 	)
 	cmdFlags.Int(
 		"rpc-port", c.RPCPort,
-		`RPC Port used to communicate with clients. Only used when server. 
-The RPC IP Address will be the same as the bind address.`,
+		``,
 	)
 	cmdFlags.Int(
 		"advertise-rpc-port", 0,
@@ -246,37 +186,23 @@ The RPC IP Address will be the same as the bind address.`,
 	)
 	cmdFlags.Int(
 		"bootstrap-expect", 0,
-		`Provides the number of expected servers in the datacenter. Either this value 
-should not be provided or the value must agree with other servers in the 
-cluster. When provided, taskvault waits until the specified number of servers are 
-available and then bootstraps the cluster. This allows an initial leader to be 
-elected automatically. This flag requires server mode.`,
+		``,
 	)
 	cmdFlags.String(
 		"data-dir", c.DataDir,
-		`Specifies the directory to use for server-specific data, including the 
-replicated log. By default, this is the top-level data-dir, 
-like [/var/lib/taskvault]`,
+		``,
 	)
 	cmdFlags.String(
 		"datacenter", c.Datacenter,
-		`Specifies the data center of the local agent. All members of a datacenter 
-should share a local LAN connection.`,
+		``,
 	)
 	cmdFlags.String(
 		"region", c.Region,
-		`Specifies the region the taskvault agent is a member of. A region typically maps 
-to a geographic region, for example us, with potentially multiple zones, which 
-map to datacenters such as us-west and us-east`,
+		``,
 	)
 	cmdFlags.String(
 		"serf-reconnect-timeout", c.SerfReconnectTimeout,
-		`This is the amount of time to attempt to reconnect to a failed node before 
-giving up and considering it completely gone. In Kubernetes, you might need 
-this to about 5s, because there is no reason to try reconnects for default 
-24h value. Also Raft behaves oddly if node is not reaped and returned with 
-same ID, but different IP.
-Format there: https://golang.org/pkg/time/#ParseDuration`,
+		``,
 	)
 	cmdFlags.Bool(
 		"bootstrap", false,
@@ -284,11 +210,11 @@ Format there: https://golang.org/pkg/time/#ParseDuration`,
 	)
 	cmdFlags.Bool(
 		"ui", true,
-		"Enable the web UI on this node. The node must be server.",
+		"",
 	)
 
 	cmdFlags.Bool(
-		"enable-prometheus", true, "Enable serving prometheus metrics",
+		"enable-prometheus", true, "",
 	)
 
 	return cmdFlags
@@ -361,7 +287,6 @@ func normalizeAdvertise(
 	}
 
 	if addr != "" {
-		// Default to using manually configured address
 		_, _, err = net.SplitHostPort(addr)
 		if err != nil {
 			if !isMissingPort(err) && !isTooManyColons(err) {
@@ -370,36 +295,31 @@ func normalizeAdvertise(
 				)
 			}
 
-			// missing port, append the default
 			return net.JoinHostPort(addr, strconv.Itoa(defport)), nil
 		}
 
 		return addr, nil
 	}
 
-	// TODO: Revisit this as the lookup doesn't work with IP addresses
 	ips, err := net.LookupIP(bind)
 	if err != nil {
-		return "", ErrResolvingHost // fmt.Errorf("Error resolving bind address %q: %v", bind, err)
+		return "", ErrResolvingHost 
 	}
 
-	// Return the first non-localhost unicast address
 	for _, ip := range ips {
 		if ip.IsLinkLocalUnicast() || ip.IsGlobalUnicast() {
 			return net.JoinHostPort(ip.String(), strconv.Itoa(defport)), nil
 		}
 		if ip.IsLoopback() {
 			if dev {
-				// loopback is fine for dev mode
 				return net.JoinHostPort(ip.String(), strconv.Itoa(defport)), nil
 			}
 			return "", fmt.Errorf(
-				"defaulting advertise to localhost is unsafe, please set advertise manually",
+				"defaulting advertise to localhost is unsafe",
 			)
 		}
 	}
 
-	// Bind is not localhost but not a valid advertise IP, use first private IP
 	addr, err = ParseSingleIPTemplate("{{ GetPrivateIP }}")
 	if err != nil {
 		return "", fmt.Errorf(
@@ -410,13 +330,11 @@ func normalizeAdvertise(
 }
 
 func isMissingPort(err error) bool {
-	// matches error const in net/ipsock.go
 	const missingPort = "missing port in address"
 	return err != nil && strings.Contains(err.Error(), missingPort)
 }
 
 func isTooManyColons(err error) bool {
-	// matches error const in net/ipsock.go
 	const tooManyColons = "too many colons in address"
 	return err != nil && strings.Contains(err.Error(), tooManyColons)
 }

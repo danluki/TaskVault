@@ -35,22 +35,21 @@ func initConfig() error {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		viper.SetConfigName("taskvault")        // name of config file (without extension)
-		viper.AddConfigPath("/etc/taskvault")   // call multiple times to add many search paths
-		viper.AddConfigPath("$HOME/.taskvault") // call multiple times to add many search paths
-		viper.AddConfigPath("./config")         // call multiple times to add many search paths
+		viper.SetConfigName("taskvault") 
+		viper.AddConfigPath("/etc/taskvault") 
+		viper.AddConfigPath("$HOME/.taskvault") 
+		viper.AddConfigPath("./config") 
 	}
 
 	viper.SetEnvPrefix("taskvault")
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()
 
-	// Add hook to set error logs to stderr and regular logs to stdout
 	logrus.AddHook(&logging.LogSplitter{})
 
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+	err := viper.ReadInConfig()
+	if err != nil {             
 		logrus.WithError(err).Info("No valid config found: Applying default values.")
 	}
 

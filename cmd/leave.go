@@ -6,13 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// versionCmd represents the version command
 var leaveCmd = &cobra.Command{
 	Use:   "leave",
 	Short: "Force an agent to leave the cluster",
-	Long: `Stop stops an agent, if the agent is a server and is running for election
-	stop running for election, if this server was the leader
-	this will force the cluster to elect a new leader`,
+	Long:  `Stop stops an agent`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		ipa, err := taskvault.ParseSingleIPTemplate(rpcAddr)
 		if err != nil {

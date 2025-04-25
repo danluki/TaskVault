@@ -5,7 +5,6 @@ go 1.23.3
 require (
 	github.com/armon/go-metrics v0.4.1
 	github.com/gin-contrib/cors v1.7.2
-	github.com/gin-contrib/expvar v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/hashicorp/go-discover v0.0.0-20240829174204-275a71457aa4
 	github.com/hashicorp/go-metrics v0.5.3
@@ -25,7 +24,6 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/buntdb v1.3.2
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )
@@ -150,6 +148,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect

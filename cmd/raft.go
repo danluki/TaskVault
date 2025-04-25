@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// versionCmd represents the version command
 var raftCmd = &cobra.Command{
 	Use:   "raft [command]",
 	Short: "Command to perform some raft operations",
@@ -38,7 +37,6 @@ var raftListCmd = &cobra.Command{
 			return err
 		}
 
-		// Format it as a nice table.
 		result := []string{"Node|ID|Address|State|Voter"}
 		for _, s := range reply.Servers {
 			state := "follower"

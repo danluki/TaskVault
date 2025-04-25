@@ -21,17 +21,15 @@ const (
 	gracefulTimeout = 3 * time.Hour
 )
 
-// agentCmd represents the agent command
 var agentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Start a taskvault agent",
-	Long: `Start a taskvault agent
-It also runs a web UI.`,
+	Long:  `Start a taskvault agent. It also runs a web UI if needed.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig()
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return agentRun(args...)
+		return agentRun()
 	},
 }
 
@@ -45,7 +43,7 @@ func init() {
 	_ = viper.BindPFlags(agentCmd.Flags())
 }
 
-func agentRun(args ...string) error {
+func agentRun() error {
 	agent = taskvault.NewAgent(config)
 	if err := agent.Start(); err != nil {
 		return err
@@ -79,7 +77,6 @@ func handleSignals() int {
 		return 1
 	}
 
-	// Attempt a graceful leave
 	log.Info("agent: Gracefully shutting down agent...")
 	go func() {
 		if err := agent.Stop(); err != nil {
@@ -91,11 +88,7 @@ func handleSignals() int {
 
 	gracefulCh := make(chan struct{})
 
-	for {
-		log.Info("Waiting for some internal tasks to finish...")
-		break
-		time.Sleep(1 * time.Second)
-	}
+	time.Sleep(1 * time.Second)
 
 	close(gracefulCh)
 

@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/danluki/taskvault/pkg/types"
-	"github.com/gin-contrib/expvar"
 	"github.com/hashicorp/go-uuid"
 
 	"github.com/gin-contrib/cors"
@@ -19,12 +18,10 @@ const (
 	apiPathPrefix = "v1"
 )
 
-// Transport is the interface that wraps the ServeHTTP method.
 type Transport interface {
 	ServeHTTP()
 }
 
-// HTTPTransport stores pointers to an agent and a gin Engine.
 type HTTPTransport struct {
 	Engine *gin.Engine
 
@@ -32,7 +29,6 @@ type HTTPTransport struct {
 	logger *logrus.Entry
 }
 
-// NewTransport creates an HTTPTransport with a bound agent.
 func NewTransport(a *Agent, log *logrus.Entry) *HTTPTransport {
 	return &HTTPTransport{
 		agent:  a,
@@ -52,7 +48,6 @@ func (h *HTTPTransport) ServeHTTP() {
 	config.ExposeHeaders = []string{"*"}
 
 	rootPath.Use(cors.New(config))
-	rootPath.Use(h.MetaMiddleware())
 
 	h.APIRoutes(rootPath)
 	if h.agent.config.UI {
@@ -72,12 +67,9 @@ func (h *HTTPTransport) ServeHTTP() {
 	}()
 }
 
-// APIRoutes registers the api routes on the gin RouterGroup.
 func (h *HTTPTransport) APIRoutes(
 	r *gin.RouterGroup, middleware ...gin.HandlerFunc,
 ) {
-	r.GET("/debug/vars", expvar.Handler())
-
 	h.Engine.GET(
 		"/health", func(c *gin.Context) {
 			c.JSON(
@@ -89,7 +81,6 @@ func (h *HTTPTransport) APIRoutes(
 	)
 
 	if h.agent.config.EnablePrometheus {
-		// Prometheus metrics scrape endpoint
 		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	}
 
@@ -108,14 +99,6 @@ func (h *HTTPTransport) APIRoutes(
 	pairs.POST("", h.pairPostHandler)
 	pairs.DELETE("/:key", h.pairDeleteHandler)
 	pairs.PATCH("/", h.pairDeleteHandler)
-}
-
-// MetaMiddleware adds middleware to the gin Context.
-func (h *HTTPTransport) MetaMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Header("X-Whom", h.agent.config.NodeName)
-		c.Next()
-	}
 }
 
 func renderJSON(c *gin.Context, status int, v interface{}) {
@@ -180,13 +163,6 @@ func (h *HTTPTransport) indexHandler(c *gin.Context) {
 }
 
 func (h *HTTPTransport) pairsHandler(c *gin.Context) {
-	// metadata := c.QueryMap("metadata")
-	sort := c.DefaultQuery("_sort", "id")
-	if sort == "id" {
-		sort = "name"
-	}
-	// order := c.DefaultQuery("_order", "ASC")
-	// q := c.Query("q")
 
 	pairs, err := h.agent.Store.GetAllValues()
 	if err != nil {
@@ -231,7 +207,6 @@ func (h *HTTPTransport) pairGetHandler(c *gin.Context) {
 func (h *HTTPTransport) pairDeleteHandler(c *gin.Context) {
 	keyName := c.Param("key")
 
-	// Call gRPC Deletepair
 	err := h.agent.GRPCClient.DeleteValue(keyName)
 	if err != nil {
 		_ = c.AbortWithError(http.StatusNotFound, err)

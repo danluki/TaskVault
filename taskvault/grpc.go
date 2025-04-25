@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// TaskvaultGRPCServer defines the basics that a gRPC server should implement.
 type TaskvaultGRPCServer interface {
 	types2.TaskvaultServer
 	Serve(net.Listener) error
@@ -45,7 +44,6 @@ func (grpcs *GRPCServer) Serve(lis net.Listener) error {
 	return nil
 }
 
-// Encode is used to encode a Protoc object with type prefix
 func Encode(t MessageType, msg interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte(uint8(t))
@@ -57,8 +55,6 @@ func Encode(t MessageType, msg interface{}) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-// CreateValue implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).CreateValue of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) CreateValue(
 	ctx context.Context,
 	req *types2.CreateValueRequest,
@@ -91,8 +87,6 @@ func (g *GRPCServer) CreateValue(
 	}, nil
 }
 
-// DeleteJob implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).DeleteJob of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) DeleteValue(
 	ctx context.Context,
 	req *types2.DeleteValueRequest,
@@ -130,8 +124,6 @@ func (g *GRPCServer) DeleteValue(
 	return resm, nil
 }
 
-// GetAllPairs implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).GetAllPairs of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) GetAllPairs(
 	ctx context.Context,
 	req *emptypb.Empty,
@@ -157,8 +149,6 @@ func (g *GRPCServer) GetAllPairs(
 	}, nil
 }
 
-// GetValue implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).GetValue of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) GetValue(
 	ctx context.Context,
 	req *types2.GetValueRequest,
@@ -177,28 +167,21 @@ func (g *GRPCServer) GetValue(
 	}, nil
 }
 
-// Leave implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).Leave of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) Leave(
 	ctx context.Context, req *emptypb.Empty,
 ) (*emptypb.Empty, error) {
 	return req, g.agent.Stop()
 }
 
-// RaftGetConfiguration implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).RaftGetConfiguration of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) RaftGetConfiguration(
 	ctx context.Context,
 	req *emptypb.Empty,
 ) (*types2.RaftGetConfigurationResponse, error) {
-	// We can't fetch the leader and the configuration atomically with
-	// the current Raft API.
 	future := g.agent.raft.GetConfiguration()
 	if err := future.Error(); err != nil {
 		return nil, err
 	}
 
-	// Index the information about the servers.
 	serverMap := make(map[raft.ServerAddress]serf.Member)
 	for _, member := range g.agent.serf.Members() {
 		valid, parts := isServer(member)
@@ -210,7 +193,6 @@ func (g *GRPCServer) RaftGetConfiguration(
 		serverMap[raft.ServerAddress(addr)] = member
 	}
 
-	// Fill out the reply.
 	leader := g.agent.raft.Leader()
 	reply := &types2.RaftGetConfigurationResponse{}
 	reply.Index = future.Index()
@@ -237,53 +219,13 @@ func (g *GRPCServer) RaftGetConfiguration(
 	return reply, nil
 }
 
-// RaftRemovePeerByID implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).RaftRemovePeerByID of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) RaftRemovePeerByID(
 	ctx context.Context,
 	req *types2.RaftRemovePeerByIDRequest,
 ) (*emptypb.Empty, error) {
-	// Since this is an operation designed for humans to use, we will return
-	// an error if the supplied id isn't among the peers since it's
-	// likely they screwed up.
-	{
-		future := g.agent.raft.GetConfiguration()
-		if err := future.Error(); err != nil {
-			return nil, err
-		}
-		for _, s := range future.Configuration().Servers {
-			if s.ID == raft.ServerID(req.Id) {
-				goto REMOVE
-			}
-		}
-		return nil, fmt.Errorf(
-			"id %q was not found in the Raft configuration", req.Id,
-		)
-	}
-
-REMOVE:
-	// The Raft library itself will prevent various forms of foot-shooting,
-	// like making a configuration with no voters. Some consideration was
-	// given here to adding more checks, but it was decided to make this as
-	// low-level and direct as possible. We've got ACL coverage to lock this
-	// down, and if you are an operator, it's assumed you know what you are
-	// doing if you are calling this. If you remove a peer that's known to
-	// Serf, for example, it will come back when the leader does a reconcile
-	// pass.
-	future := g.agent.raft.RemoveServer(raft.ServerID(req.Id), 0, 0)
-	if err := future.Error(); err != nil {
-		g.logger.WithError(err).WithField(
-			"peer", req.Id,
-		).Warn("failed to remove Raft peer")
-		return nil, err
-	}
-
-	g.logger.WithField("peer", req.Id).Warn("removed Raft peer")
-	return new(emptypb.Empty), nil
+	panic("unimplemeneted")
 }
 
-// UpdateValue implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).UpdateValue of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) UpdateValue(
 	ctx context.Context,
 	req *types2.UpdateValueRequest,
@@ -291,8 +233,6 @@ func (g *GRPCServer) UpdateValue(
 	panic("unimplemented")
 }
 
-// mustEmbedUnimplementedTaskvaultServer implements TaskvaultGRPCServer.
-// Subtle: this method shadows the method (TaskvaultServer).mustEmbedUnimplementedTaskvaultServer of GRPCServer.TaskvaultServer.
 func (g *GRPCServer) mustEmbedUnimplementedTaskvaultServer() {
 	panic("unimplemented")
 }

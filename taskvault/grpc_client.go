@@ -47,9 +47,7 @@ func NewGRPCClient(
 	}
 }
 
-// Connect dialing to a gRPC server
 func (grpcc *GRPCClient) Connect(addr string) (*grpc.ClientConn, error) {
-	// Initiate a connection with the server
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, grpcc.dialOpt...)
@@ -59,14 +57,12 @@ func (grpcc *GRPCClient) Connect(addr string) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
-// CreateValue implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) CreateValue(key string, value string) (*Pair, error) {
 	defer metrics.MeasureSince([]string{"grpc", "create_value"}, time.Now())
 	var conn *grpc.ClientConn
 
 	addr := grpcc.agent.raft.Leader()
 
-	// Initiate a connection with the server
 	conn, err := grpcc.Connect(string(addr))
 	if err != nil {
 		grpcc.logger.WithError(err).WithFields(
@@ -102,22 +98,18 @@ func (grpcc *GRPCClient) CreateValue(key string, value string) (*Pair, error) {
 	}, nil
 }
 
-// DeleteValue implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) DeleteValue(string) error {
 	panic("unimplemented")
 }
 
-// GetAllValues implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) GetAllValues() ([]Pair, error) {
 	panic("unimplemented")
 }
 
-// GetValue implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) GetValue(addr, key string) (*Pair, error) {
 	defer metrics.MeasureSince([]string{"grpc", "get_value"}, time.Now())
 	var conn *grpc.ClientConn
 
-	// Initiate a connection with the server
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
 		grpcc.logger.WithError(err).WithFields(
@@ -152,11 +144,9 @@ func (grpcc *GRPCClient) GetValue(addr, key string) (*Pair, error) {
 	}, nil
 }
 
-// Leave implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) Leave(addr string) error {
 	var conn *grpc.ClientConn
 
-	// Initiate a connection with the server
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
 		grpcc.logger.WithError(err).WithFields(
@@ -169,7 +159,6 @@ func (grpcc *GRPCClient) Leave(addr string) error {
 	}
 	defer conn.Close()
 
-	// Synchronous call
 	d := types2.NewTaskvaultClient(conn)
 	_, err = d.Leave(context.Background(), &emptypb.Empty{})
 	if err != nil {

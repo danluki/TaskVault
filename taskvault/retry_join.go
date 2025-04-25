@@ -55,11 +55,6 @@ func (r *retryJoiner) retryJoin(logger *logrus.Entry) error {
 		return err
 	}
 
-	logger.Infof(
-		"agent: Retry join %s is supported for: %s",
-		r.cluster,
-		strings.Join(disco.Names(), " "),
-	)
 	logger.WithField("cluster", r.cluster).Info("agent: Joining cluster...")
 	attempt := 0
 	for {

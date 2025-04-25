@@ -70,7 +70,6 @@ func init() {
 			"the directory to write the doc.",
 		)
 
-	// For bash-completion
 	docCmd.PersistentFlags().SetAnnotation(
 		"dir", cobra.BashCompSubdirsInDir, []string{},
 	)

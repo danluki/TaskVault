@@ -1,13 +1,10 @@
 package taskvault
 
 import (
-	"crypto/tls"
 	"errors"
-	"expvar"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
-	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -21,17 +18,16 @@ import (
 	"github.com/hashicorp/serf/serf"
 	"github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
-	"golang.org/x/exp/rand"
 )
 
 const (
 	raftTimeout      = 30 * time.Second
 	raftLogCacheSize = 512
 	minRaftProtocol  = 3
+	raftMultiplier   = 5
 )
 
 var (
-	expNode             = expvar.NewString("node")
 	ErrLeaderNotFound   = errors.New("no member leader found")
 	ErrNoSuitableServer = errors.New("no suitable server found")
 )
@@ -40,7 +36,6 @@ type Node = serf.Member
 
 type Agent struct {
 	Store      Storage
-	TLSConfig  *tls.Config
 	config     *Config
 	eventCh    chan serf.Event
 	shutdownCh chan struct{}
@@ -115,12 +110,6 @@ func (a *Agent) Start() error {
 		}
 	}
 
-	if err := initMetrics(a); err != nil {
-		a.logger.Fatal("agent: Can not setup metrics")
-	}
-
-	expNode.Set(a.config.NodeName)
-
 	if a.config.AdvertiseRPCPort <= 0 {
 		a.config.AdvertiseRPCPort = a.config.RPCPort
 	}
@@ -162,7 +151,6 @@ func (a *Agent) JoinLAN(addrs []string) (int, error) {
 func (a *Agent) Stop() error {
 	a.logger.Info("agent: Called member stop, now stopping")
 
-	// TODO: Check why Shutdown().Error() is not working
 	_ = a.raft.Shutdown()
 
 	if err := a.Store.Shutdown(); err != nil {
@@ -179,34 +167,12 @@ func (a *Agent) Stop() error {
 
 	return nil
 }
-
-// UpdateTags updates the tag configuration for this agent
-func (a *Agent) UpdateTags(tags map[string]string) {
-	currentTags := a.serf.LocalMember().Tags
-	for _, tagName := range []string{
-		"role", "version", "server", "bootstrap", "expect", "port", "rpc_addr",
-	} {
-		if val, exists := currentTags[tagName]; exists {
-			tags[tagName] = val
-		}
-	}
-	tags["dc"] = a.config.Datacenter
-	tags["region"] = a.config.Region
-
-	err := a.serf.SetTags(tags)
-	if err != nil {
-		a.logger.Warnf("Setting tags unsuccessful: %s.", err.Error())
-	}
-}
-
 func (a *Agent) setupRaft() error {
-	if a.config.BootstrapExpect > 0 {
-		if a.config.BootstrapExpect == 1 {
-			a.config.Bootstrap = true
-		}
+	if a.config.BootstrapExpect == 1 {
+		a.config.Bootstrap = true
 	}
 
-	logger := ioutil.Discard
+	logger := io.Discard
 	if a.logger.Logger.Level == logrus.DebugLevel {
 		logger = a.logger.Logger.Writer()
 	}
@@ -222,14 +188,7 @@ func (a *Agent) setupRaft() error {
 
 	config := raft.DefaultConfig()
 
-	// Raft performance
-	raftMultiplier := a.config.RaftMultiplier
-	if raftMultiplier < 1 || raftMultiplier > 10 {
-		return fmt.Errorf(
-			"raft-multiplier cannot be %d. Must be between 1 and 10",
-			raftMultiplier,
-		)
-	}
+	raftMultiplier := raftMultiplier
 	config.HeartbeatTimeout = config.HeartbeatTimeout * time.Duration(raftMultiplier)
 	config.ElectionTimeout = config.ElectionTimeout * time.Duration(raftMultiplier)
 	config.LeaderLeaseTimeout = config.LeaderLeaseTimeout * time.Duration(a.config.RaftMultiplier)
@@ -277,37 +236,6 @@ func (a *Agent) setupRaft() error {
 			return err
 		}
 		logStore = cacheStore
-
-		// Check for peers.json file for recovery
-		peersFile := filepath.Join(a.config.DataDir, "raft", "peers.json")
-		if _, err := os.Stat(peersFile); err == nil {
-			a.logger.Info("found peers.json file, recovering Raft configuration...")
-			var configuration raft.Configuration
-			configuration, err = raft.ReadConfigJSON(peersFile)
-			if err != nil {
-				return fmt.Errorf(
-					"recovery failed to parse peers.json: %v", err,
-				)
-			}
-			store, err := NewStore(a.logger)
-			if err != nil {
-				a.logger.WithError(err).Fatal("taskvault: Error initializing store")
-			}
-			tmpFsm := newFSM(store, a.logger)
-			if err := raft.RecoverCluster(
-				config, tmpFsm,
-				logStore, stableStore, snapshots, transport, configuration,
-			); err != nil {
-				return fmt.Errorf("recovery failed: %v", err)
-			}
-			if err := os.Remove(peersFile); err != nil {
-				return fmt.Errorf(
-					"recovery failed to delete peers.json, please delete manually (see peers.info for details): %v",
-					err,
-				)
-			}
-			a.logger.Info("deleted peers.json file after successful recovery")
-		}
 	}
 
 	if a.config.Bootstrap || a.config.DevMode {
@@ -346,7 +274,6 @@ func (a *Agent) setupRaft() error {
 	return nil
 }
 
-// setupSerf is used to create the agent we use
 func (a *Agent) setupSerf() (*serf.Serf, error) {
 	config := a.config
 
@@ -425,11 +352,10 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 		serfConfig.LogOutput = a.logger.Logger.Writer()
 		serfConfig.MemberlistConfig.LogOutput = a.logger.Logger.Writer()
 	} else {
-		serfConfig.LogOutput = ioutil.Discard
-		serfConfig.MemberlistConfig.LogOutput = ioutil.Discard
+		serfConfig.LogOutput = io.Discard
+		serfConfig.MemberlistConfig.LogOutput = io.Discard
 	}
 
-	// Create serf first
 	serf, err := serf.Create(serfConfig)
 	if err != nil {
 		a.logger.Error(err)
@@ -463,38 +389,15 @@ func (a *Agent) StartServer() {
 	tcpm := cmux.New(a.listener)
 	var grpcl, raftl net.Listener
 
-	if a.TLSConfig != nil {
-		a.raftLayer = NewTLSRaftLayer(a.TLSConfig, a.logger)
+	a.raftLayer = NewRaftLayer(a.logger)
 
-		tlsl := tcpm.Match(cmux.Any())
-		tlsl = tls.NewListener(tlsl, a.TLSConfig)
+	grpcl = tcpm.MatchWithWriters(
+		cmux.HTTP2MatchHeaderFieldSendSettings(
+			"content-type", "application/grpc",
+		),
+	)
 
-		tlsm := cmux.New(tlsl)
-
-		grpcl = tlsm.MatchWithWriters(
-			cmux.HTTP2MatchHeaderFieldSendSettings(
-				"content-type", "application/grpc",
-			),
-		)
-
-		raftl = tlsm.Match(cmux.Any())
-
-		go func() {
-			if err := tlsm.Serve(); err != nil {
-				a.logger.Fatal(err)
-			}
-		}()
-	} else {
-		a.raftLayer = NewRaftLayer(a.logger)
-
-		grpcl = tcpm.MatchWithWriters(
-			cmux.HTTP2MatchHeaderFieldSendSettings(
-				"content-type", "application/grpc",
-			),
-		)
-
-		raftl = tcpm.Match(cmux.Any())
-	}
+	raftl = tcpm.Match(cmux.Any())
 
 	if a.GRPCServer == nil {
 		a.GRPCServer = NewGRPCServer(a, a.logger)
@@ -512,7 +415,6 @@ func (a *Agent) StartServer() {
 		a.logger.WithError(err).Fatal("agent: Raft layer failed to start")
 	}
 
-	// Start serving everything
 	go func() {
 		if err := tcpm.Serve(); err != nil {
 			a.logger.Fatal(err)
@@ -595,7 +497,6 @@ func (a *Agent) eventLoop() {
 					).Debug("agent: Member event")
 				}
 
-				// serfEventHandler is used to handle events from the serf cluster
 				switch e.EventType() {
 				case serf.EventMemberJoin:
 					a.nodeJoin(me)
@@ -608,7 +509,7 @@ func (a *Agent) eventLoop() {
 				case serf.EventMemberUpdate:
 					a.lanNodeUpdate(me)
 					a.localMemberEvent(me)
-				case serf.EventUser, serf.EventQuery: // Ignore
+				case serf.EventUser, serf.EventQuery:
 				default:
 					a.logger.WithField(
 						"event", e.String(),
@@ -633,60 +534,6 @@ func (a *Agent) join(addrs []string, replay bool) (n int, err error) {
 		a.logger.Warnf("agent: error joining: %v", err)
 	}
 	return
-}
-
-func (a *Agent) getTargetNodes(
-	tags map[string]string, selectFunc func([]Node) int,
-) []Node {
-	bareTags, cardinality := cleanTags(tags, a.logger)
-	nodes := a.getQualifyingNodes(a.serf.Members(), bareTags)
-	return selectNodes(nodes, cardinality, selectFunc)
-}
-
-func (a *Agent) getQualifyingNodes(
-	nodes []Node, bareTags map[string]string,
-) []Node {
-	// Determine the usable set of nodes
-	qualifiers := filterArray(
-		nodes, func(node Node) bool {
-			return node.Status == serf.StatusAlive &&
-				node.Tags["region"] == a.config.Region &&
-				nodeMatchesTags(node, bareTags)
-		},
-	)
-	return qualifiers
-}
-
-func defaultSelector(nodes []Node) int {
-	return rand.Intn(len(nodes))
-}
-
-func selectNodes(
-	nodes []Node, cardinality int, selectFunc func([]Node) int,
-) []Node {
-	numNodes := len(nodes)
-	if numNodes <= cardinality {
-		return nodes
-	}
-
-	for ; cardinality > 0; cardinality-- {
-		chosenIndex := selectFunc(nodes[:numNodes])
-
-		nodes[numNodes-1], nodes[chosenIndex] = nodes[chosenIndex], nodes[numNodes-1]
-		numNodes--
-	}
-
-	return nodes[numNodes:]
-}
-
-func filterArray(arr []Node, filterFunc func(Node) bool) []Node {
-	for i := len(arr) - 1; i >= 0; i-- {
-		if !filterFunc(arr[i]) {
-			arr[i] = arr[len(arr)-1]
-			arr = arr[:len(arr)-1]
-		}
-	}
-	return arr
 }
 
 func (a *Agent) advertiseRPCAddr() string {
@@ -714,26 +561,6 @@ func (a *Agent) applySetPair(pair *types.Pair) error {
 	return nil
 }
 
-// RaftApply applies a command to the Raft log
 func (a *Agent) RaftApply(cmd []byte) raft.ApplyFuture {
 	return a.raft.Apply(cmd, raftTimeout)
-}
-
-// Check if the server is alive and select it
-func (a *Agent) checkAndSelectServer() (string, error) {
-	var peers []string
-	for _, p := range a.LocalServers() {
-		peers = append(peers, p.RPCAddr.String())
-	}
-
-	for _, peer := range peers {
-		a.logger.WithField("peer", peer).Debug("Checking peer")
-		conn, err := net.DialTimeout("tcp", peer, 1*time.Second)
-		if err == nil {
-			conn.Close()
-			a.logger.WithField("peer", peer).Debug("Found good peer")
-			return peer, nil
-		}
-	}
-	return "", ErrNoSuitableServer
 }
