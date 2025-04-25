@@ -47,12 +47,6 @@ type Config struct {
 
     LogLevel string `mapstructure:"log-level"`
 
-    // Doesnt work for now
-    Datacenter string
-
-    // Doesnt work for now
-    Region string
-
     Bootstrap bool
 
     BootstrapExpect int `mapstructure:"bootstrap-expect"`
@@ -97,8 +91,6 @@ func DefaultConfig() *Config {
         RPCPort:              DefaultRPCPort,
         Tags:                 tags,
         DataDir:              "taskvault.data",
-        Datacenter:           "dc1",
-        Region:               "global",
         ReconcileInterval:    60 * time.Second,
         SerfReconnectTimeout: "24h",
         UI:                   true,
@@ -172,14 +164,6 @@ func ConfigFlagSet() *flag.FlagSet {
     )
     cmdFlags.String(
         "data-dir", c.DataDir,
-        ``,
-    )
-    cmdFlags.String(
-        "datacenter", c.Datacenter,
-        ``,
-    )
-    cmdFlags.String(
-        "region", c.Region,
         ``,
     )
     cmdFlags.String(

@@ -7,7 +7,6 @@ import (
 	"net"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/armon/go-metrics"
@@ -51,12 +50,9 @@ type Agent struct {
 	reconcileCh   chan serf.Member
 	raftInmem     *raft.InmemStore
 	GRPCServer    TaskvaultGRPCServer
-	peers         map[string][]*ServerParts
 	logger        *logrus.Entry
 	retryJoinCh   chan error
 	leaderCh      <-chan bool
-	localPeers    map[raft.ServerAddress]*ServerParts
-	peerLock      sync.RWMutex
 	serverLookup  *ServerLookup
 	listener      net.Listener
 }
@@ -277,9 +273,6 @@ func (a *Agent) setupRaft() error {
 func (a *Agent) setupSerf() (*serf.Serf, error) {
 	config := a.config
 
-	a.localPeers = make(map[raft.ServerAddress]*ServerParts)
-	a.peers = make(map[string][]*ServerParts)
-
 	bindIP, bindPort, err := config.AddrParts(config.BindAddr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid bind address: %s", err)
@@ -303,11 +296,7 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	serfConfig.Init()
 
 	serfConfig.Tags = a.config.Tags
-	serfConfig.Tags["role"] = "taskvault"
-	serfConfig.Tags["dc"] = a.config.Datacenter
-	serfConfig.Tags["region"] = a.config.Region
 	serfConfig.Tags["version"] = Version
-	serfConfig.Tags["server"] = strconv.FormatBool(true)
 	if a.config.Bootstrap {
 		serfConfig.Tags["bootstrap"] = "1"
 	}
@@ -437,7 +426,6 @@ func (a *Agent) IsLeader() bool {
 	return a.raft.State() == raft.Leader
 }
 
-
 func (a *Agent) Servers() (members []*ServerParts) {
 	for _, member := range a.serf.Members() {
 		ok, parts := isServer(member)
@@ -455,9 +443,9 @@ func (a *Agent) LocalServers() (members []*ServerParts) {
 		if !ok || member.Status != serf.StatusAlive {
 			continue
 		}
-		if a.config.Region == parts.Region {
-			members = append(members, parts)
-		}
+
+		members = append(members, parts)
+
 	}
 	return members
 }
@@ -548,8 +536,4 @@ func (a *Agent) applySetPair(pair *types.Pair) error {
 	}
 
 	return nil
-}
-
-func (a *Agent) RaftApply(cmd []byte) raft.ApplyFuture {
-	return a.raft.Apply(cmd, raftTimeout)
 }

@@ -56,30 +56,6 @@ func (a *Agent) monitorLeadership() {
 	}
 }
 
-func (a *Agent) leadershipTransfer() error {
-	retryCount := 3
-	for i := 0; i < retryCount; i++ {
-		err := a.raft.LeadershipTransfer().Error()
-		if err == nil {
-			a.logger.Info("taskvault: successfully transferred leadership")
-			return nil
-		}
-
-		if err == raft.ErrUnsupportedProtocol {
-			return fmt.Errorf("leadership transfer not supported with Raft version lower than 3")
-		}
-
-		a.logger.Error(
-			"failed to transfer leadership attempt, will retry",
-			"attempt", i,
-			"retry_limit", retryCount,
-			"error", err,
-		)
-	}
-	return fmt.Errorf(
-		"failed to transfer leadership in %d attempts", retryCount,
-	)
-}
 
 func (a *Agent) leaderLoop(stopCh chan struct{}) {
 	var reconcileCh chan serf.Member
@@ -142,7 +118,7 @@ func (a *Agent) reconcile() error {
 
 func (a *Agent) reconcileMember(member serf.Member) error {
 	valid, parts := isServer(member)
-	if !valid || parts.Region != a.config.Region {
+	if !valid {
 		return nil
 	}
 	defer metrics.MeasureSince(

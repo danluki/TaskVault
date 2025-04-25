@@ -15,12 +15,9 @@ func (a int64arr) Len() int           { return len(a) }
 func (a int64arr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a int64arr) Less(i, j int) bool { return a[i] < a[j] }
 
-// ServerParts is used to return the parts of a server role
 type ServerParts struct {
 	Name         string
 	ID           string
-	Region       string
-	Datacenter   string
 	Port         int
 	Bootstrap    bool
 	Expect       int
@@ -32,8 +29,8 @@ type ServerParts struct {
 }
 
 func (s *ServerParts) String() string {
-	return fmt.Sprintf("%s (Addr: %s) (DC: %s)",
-		s.Name, s.Addr, s.Datacenter)
+	return fmt.Sprintf("%s (Addr: %s)",
+		s.Name, s.Addr)
 }
 
 func (s *ServerParts) Copy() *ServerParts {
@@ -47,17 +44,7 @@ func UserAgent() string {
 }
 
 func isServer(m serf.Member) (bool, *ServerParts) {
-	if m.Tags["role"] != "taskvault" {
-		return false, nil
-	}
-
-	if m.Tags["server"] != "true" {
-		return false, nil
-	}
-
 	id := m.Name
-	region := m.Tags["region"]
-	datacenter := m.Tags["dc"]
 	_, bootstrap := m.Tags["bootstrap"]
 
 	expect := 0
@@ -94,8 +81,6 @@ func isServer(m serf.Member) (bool, *ServerParts) {
 	parts := &ServerParts{
 		Name:         m.Name,
 		ID:           id,
-		Region:       region,
-		Datacenter:   datacenter,
 		Port:         port,
 		Bootstrap:    bootstrap,
 		Expect:       expect,

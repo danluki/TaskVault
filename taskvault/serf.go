@@ -27,25 +27,6 @@ func (a *Agent) nodeJoin(me serf.MemberEvent) {
 			"server", parts.Name,
 		).Info("Adding LAN adding server")
 		a.serverLookup.AddServer(parts)
-		found := false
-		a.peerLock.Lock()
-		existing := a.peers[parts.Region]
-		for idx, e := range existing {
-			if e.Name == parts.Name {
-				existing[idx] = parts
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			a.peers[parts.Region] = append(existing, parts)
-		}
-
-		if parts.Region == a.config.Region {
-			a.localPeers[raft.ServerAddress(parts.Addr.String())] = parts
-		}
-		a.peerLock.Unlock()
 
 		if a.config.BootstrapExpect != 0 {
 			a.maybeBootstrap()
@@ -79,9 +60,6 @@ func (a *Agent) maybeBootstrap() {
 	for _, member := range members {
 		valid, p := isServer(member)
 		if !valid {
-			continue
-		}
-		if p.Region != a.config.Region {
 			continue
 		}
 		if p.Expect != 0 && p.Expect != a.config.BootstrapExpect {
@@ -173,28 +151,6 @@ func (a *Agent) nodeFailed(me serf.MemberEvent) {
 		}
 		a.logger.Info("removing server ", parts)
 
-		a.peerLock.Lock()
-		existing := a.peers[parts.Region]
-		n := len(existing)
-		for i := 0; i < n; i++ {
-			if existing[i].Name == parts.Name {
-				existing[i], existing[n-1] = existing[n-1], nil
-				existing = existing[:n-1]
-				n--
-				break
-			}
-		}
-
-		if n == 0 {
-			delete(a.peers, parts.Region)
-		} else {
-			a.peers[parts.Region] = existing
-		}
-
-		if parts.Region == a.config.Region {
-			delete(a.localPeers, raft.ServerAddress(parts.Addr.String()))
-		}
-		a.peerLock.Unlock()
 		a.serverLookup.RemoveServer(parts)
 	}
 }
@@ -224,7 +180,6 @@ func (a *Agent) lanNodeUpdate(me serf.MemberEvent) {
 			continue
 		}
 		a.logger.WithField("server", parts.String()).Info("Updating LAN server")
-
 
 		a.serverLookup.AddServer(parts)
 	}

@@ -144,7 +144,7 @@ func (h *HTTPTransport) leaveHandler(c *gin.Context) {
 	if err := h.agent.Stop(); err != nil {
 		_ = c.AbortWithError(http.StatusInternalServerError, err)
 	}
-	renderJSON(c, http.StatusOK, h.agent.peers)
+	renderJSON(c, http.StatusOK, h.agent.serf.Memberlist())
 }
 
 func (h *HTTPTransport) indexHandler(c *gin.Context) {
