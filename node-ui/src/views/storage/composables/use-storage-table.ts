@@ -27,14 +27,12 @@ export const useStorageTable = createGlobalState(() => {
 
     const { pagination, setPagination} = usePagination()
 
-    // Reactive state for data & loading
     const data = ref<PairInfo[]>([]);
     const loading = ref<boolean>(false);
     const error = ref<string | null>(null);
-    const pageCount = ref<number>(1); // Total pages
+    const pageCount = ref<number>(1); 
     const totalPairs = ref<number>(0);
 
-    // Compute API params
     const params = computed(() => ({
         page: pagination.value.pageIndex,
         perPage: pagination.value.pageSize,

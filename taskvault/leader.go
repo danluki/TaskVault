@@ -3,7 +3,6 @@ package taskvault
 import (
 	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -84,7 +83,6 @@ func (a *Agent) leadershipTransfer() error {
 
 func (a *Agent) leaderLoop(stopCh chan struct{}) {
 	var reconcileCh chan serf.Member
-	establishedLeader := false
 
 RECONCILE:
 	reconcileCh = nil
@@ -97,30 +95,6 @@ RECONCILE:
 		goto WAIT
 	}
 	metrics.MeasureSince([]string{"taskvault", "leader", "barrier"}, start)
-
-	if !establishedLeader {
-		if err := a.establishLeadership(stopCh); err != nil {
-			a.logger.WithError(err).Error("taskvault: failed to establish leadership")
-
-			if err := a.revokeLeadership(); err != nil {
-				a.logger.WithError(err).Error("taskvault: failed to revoke leadership")
-			}
-
-			if err := a.leadershipTransfer(); err != nil {
-				a.logger.Error("failed to transfer leadership", "error", err)
-				interval = time.After(5 * time.Second)
-				goto WAIT
-			}
-			return
-		}
-
-		establishedLeader = true
-		defer func() {
-			if err := a.revokeLeadership(); err != nil {
-				a.logger.WithError(err).Error("taskvault: failed to revoke leadership")
-			}
-		}()
-	}
 
 	if err := a.reconcile(); err != nil {
 		a.logger.WithError(err).Error("taskvault: failed to reconcile")
@@ -193,27 +167,6 @@ func (a *Agent) reconcileMember(member serf.Member) error {
 	return nil
 }
 
-func (a *Agent) establishLeadership(stopCh chan struct{}) error {
-	defer metrics.MeasureSince(
-		[]string{
-			"taskvault", "leader", "establish_leadership",
-		}, time.Now(),
-	)
-
-	a.logger.Info("agent: Starting")
-	return nil
-}
-
-func (a *Agent) revokeLeadership() error {
-	defer metrics.MeasureSince(
-		[]string{
-			"taskvault", "leader", "revoke_leadership",
-		}, time.Now(),
-	)
-
-	return nil
-}
-
 func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 	members := a.serf.Members()
 	if parts.Bootstrap {
@@ -280,7 +233,7 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 }
 
 func (a *Agent) removeRaftPeer(m serf.Member, parts *ServerParts) error {
-	if strings.EqualFold(m.Name, a.config.NodeName) {
+	if m.Name == a.config.NodeName {
 		a.logger.Warn(
 			"removing self should be done by follower", "name",
 			a.config.NodeName,

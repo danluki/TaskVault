@@ -163,7 +163,6 @@ func (h *HTTPTransport) indexHandler(c *gin.Context) {
 }
 
 func (h *HTTPTransport) pairsHandler(c *gin.Context) {
-
 	pairs, err := h.agent.Store.GetAllValues()
 	if err != nil {
 		h.logger.WithError(err).Error("api: Unable to get pairs, store not reachable.")

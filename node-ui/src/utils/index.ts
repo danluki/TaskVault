@@ -8,7 +8,7 @@ export interface User {
 const USER_COOKIE_KEY = "user_session";
 
 export function getUser(): User | null {
-    let userJson = Cookies.get(USER_COOKIE_KEY); // Get user data from cookie
+    let userJson = Cookies.get(USER_COOKIE_KEY); 
     let user: User | null = null;
 
     if (userJson) {
@@ -23,9 +23,9 @@ export function getUser(): User | null {
 }
 
 export function setUser(user: User) {
-    Cookies.set(USER_COOKIE_KEY, JSON.stringify(user), { expires: 7 }); // Cookie expires in 7 days
+    Cookies.set(USER_COOKIE_KEY, JSON.stringify(user), { expires: 7 });
 }
 
 export function logoutUser() {
-    Cookies.remove(USER_COOKIE_KEY); // Remove cookie
+    Cookies.remove(USER_COOKIE_KEY); 
 }
