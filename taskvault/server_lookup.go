@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/raft"
 )
 
-// ServerLookup encapsulates looking up servers by id and address
 type ServerLookup struct {
 	lock            sync.RWMutex
 	addressToServer map[raft.ServerAddress]*ServerParts
@@ -36,7 +35,6 @@ func (sl *ServerLookup) RemoveServer(server *ServerParts) {
 	delete(sl.idToServer, raft.ServerID(server.ID))
 }
 
-// Implements the ServerAddressProvider interface
 func (sl *ServerLookup) ServerAddr(id raft.ServerID) (raft.ServerAddress, error) {
 	sl.lock.RLock()
 	defer sl.lock.RUnlock()
@@ -47,7 +45,6 @@ func (sl *ServerLookup) ServerAddr(id raft.ServerID) (raft.ServerAddress, error)
 	return raft.ServerAddress(svr.RPCAddr.String()), nil
 }
 
-// Server looks up the server by address, returns a boolean if not found
 func (sl *ServerLookup) Server(addr raft.ServerAddress) *ServerParts {
 	sl.lock.RLock()
 	defer sl.lock.RUnlock()

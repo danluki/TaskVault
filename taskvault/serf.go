@@ -9,15 +9,11 @@ import (
 )
 
 const (
-	// StatusReap is used to update the status of a node if we
-	// are handling a EventMemberReap
 	StatusReap = serf.MemberStatus(-1)
 
-	// maxPeerRetries limits how many invalidate attempts are made
 	maxPeerRetries = 6
 )
 
-// nodeJoin is used to handle join events on the serf cluster
 func (a *Agent) nodeJoin(me serf.MemberEvent) {
 	for _, m := range me.Members {
 		ok, parts := isServer(m)
@@ -31,7 +27,6 @@ func (a *Agent) nodeJoin(me serf.MemberEvent) {
 			"server", parts.Name,
 		).Info("Adding LAN adding server")
 		a.serverLookup.AddServer(parts)
-		// Check if this server is known
 		found := false
 		a.peerLock.Lock()
 		existing := a.peers[parts.Region]
@@ -43,29 +38,22 @@ func (a *Agent) nodeJoin(me serf.MemberEvent) {
 			}
 		}
 
-		// Add ot the list if not known
 		if !found {
 			a.peers[parts.Region] = append(existing, parts)
 		}
 
-		// Check if a local peer
 		if parts.Region == a.config.Region {
 			a.localPeers[raft.ServerAddress(parts.Addr.String())] = parts
 		}
 		a.peerLock.Unlock()
 
-		// If we still expecting to bootstrap, may need to handle this
 		if a.config.BootstrapExpect != 0 {
 			a.maybeBootstrap()
 		}
 	}
 }
 
-// maybeBootstrap is used to handle bootstrapping when a new server joins
 func (a *Agent) maybeBootstrap() {
-	// Bootstrap can only be done if there are no committed logs, remove our
-	// expectations of bootstrapping. This is slightly cheaper than the full
-	// check that BootstrapCluster will do, so this is a good pre-filter.
 	var index uint64
 	var err error
 	if a.raftStore != nil {
@@ -80,14 +68,11 @@ func (a *Agent) maybeBootstrap() {
 		return
 	}
 
-	// Bootstrap can only be done if there are no committed logs,
-	// remove our expectations of bootstrapping
 	if index != 0 {
 		a.config.BootstrapExpect = 0
 		return
 	}
 
-	// Scan for all the known servers
 	members := a.serf.Members()
 	var servers []ServerParts
 	voters := 0
@@ -116,16 +101,13 @@ func (a *Agent) maybeBootstrap() {
 		servers = append(servers, *p)
 	}
 
-	// Skip if we haven't met the minimum expect count
 	if voters < a.config.BootstrapExpect {
 		return
 	}
 
-	// Query each of the servers and make sure they report no Raft peers.
 	for _, server := range servers {
 		var peers []string
 
-		// Retry with exponential backoff to get peer status from this server
 		for attempt := uint(0); attempt < maxPeerRetries; attempt++ {
 			configuration, err := a.GRPCClient.RaftGetConfiguration(server.RPCAddr.String())
 			if err != nil {
@@ -191,7 +173,6 @@ func (a *Agent) nodeFailed(me serf.MemberEvent) {
 		}
 		a.logger.Info("removing server ", parts)
 
-		// Remove the server if known
 		a.peerLock.Lock()
 		existing := a.peers[parts.Region]
 		n := len(existing)
@@ -218,20 +199,14 @@ func (a *Agent) nodeFailed(me serf.MemberEvent) {
 	}
 }
 
-// localMemberEvent is used to reconcile Serf events with the
-// consistent store if we are the current leader.
 func (a *Agent) localMemberEvent(me serf.MemberEvent) {
-	// Do nothing if we are not the leader
 	if !a.IsLeader() {
 		return
 	}
 
-	// Check if this is a reap event
 	isReap := me.EventType() == serf.EventMemberReap
 
-	// Queue the members for reconciliation
 	for _, m := range me.Members {
-		// Change the status if this is a reap event
 		if isReap {
 			m.Status = StatusReap
 		}
@@ -250,7 +225,6 @@ func (a *Agent) lanNodeUpdate(me serf.MemberEvent) {
 		}
 		a.logger.WithField("server", parts.String()).Info("Updating LAN server")
 
-		// Update server lookup
 		a.serverLookup.AddServer(parts)
 	}
 }

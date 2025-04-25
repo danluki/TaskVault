@@ -24,7 +24,7 @@ const (
 	raftTimeout      = 30 * time.Second
 	raftLogCacheSize = 512
 	minRaftProtocol  = 3
-	raftMultiplier   = 5
+	raftMultiplier   = 1
 )
 
 var (
@@ -191,7 +191,7 @@ func (a *Agent) setupRaft() error {
 	raftMultiplier := raftMultiplier
 	config.HeartbeatTimeout = config.HeartbeatTimeout * time.Duration(raftMultiplier)
 	config.ElectionTimeout = config.ElectionTimeout * time.Duration(raftMultiplier)
-	config.LeaderLeaseTimeout = config.LeaderLeaseTimeout * time.Duration(a.config.RaftMultiplier)
+	config.LeaderLeaseTimeout = config.LeaderLeaseTimeout * time.Duration(raftMultiplier)
 
 	config.LogOutput = logger
 	config.LocalID = raft.ServerID(a.config.NodeName)

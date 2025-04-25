@@ -36,26 +36,22 @@ type ServerParts struct {
 	Status       serf.MemberStatus
 }
 
-// String returns a representation of this instance
+
 func (s *ServerParts) String() string {
 	return fmt.Sprintf("%s (Addr: %s) (DC: %s)",
 		s.Name, s.Addr, s.Datacenter)
 }
 
-// Copy returns a copy of this struct
 func (s *ServerParts) Copy() *ServerParts {
 	ns := new(ServerParts)
 	*ns = *s
 	return ns
 }
 
-// UserAgent returns the consistent user-agent string
 func UserAgent() string {
 	return fmt.Sprintf("taskvault/%s (+%s;)", Version, projectURL)
 }
 
-// IsServer Returns if a member is a taskvault server. Returns a boolean,
-// and a struct with the various important components
 func isServer(m serf.Member) (bool, *ServerParts) {
 	if m.Tags["role"] != "taskvault" {
 		return false, nil
@@ -79,12 +75,10 @@ func isServer(m serf.Member) (bool, *ServerParts) {
 			return false, nil
 		}
 	}
-	// TODO
 	if expect == 1 {
 		bootstrap = true
 	}
 
-	// If the server is missing the rpc_addr tag, default to the serf advertise addr
 	rpcIP := net.ParseIP(m.Tags["rpc_addr"])
 	if rpcIP == nil {
 		rpcIP = m.Addr

@@ -62,13 +62,10 @@ func (a *Agent) leadershipTransfer() error {
 	for i := 0; i < retryCount; i++ {
 		err := a.raft.LeadershipTransfer().Error()
 		if err == nil {
-			// TODO: probably can do some task for example stop scheduler if needed
 			a.logger.Info("taskvault: successfully transferred leadership")
 			return nil
 		}
 
-		// Don't retry if the Raft version doesn't support leadership transfer
-		// since this will never succeed.
 		if err == raft.ErrUnsupportedProtocol {
 			return fmt.Errorf("leadership transfer not supported with Raft version lower than 3")
 		}
@@ -125,19 +122,13 @@ RECONCILE:
 		}()
 	}
 
-	// Reconcile any missing data
 	if err := a.reconcile(); err != nil {
 		a.logger.WithError(err).Error("taskvault: failed to reconcile")
 		goto WAIT
 	}
 
-	// Initial reconcile worked, now we can process the channel
-	// updates
 	reconcileCh = a.reconcileCh
 
-	// Poll the stop channel to give it priority so we don't waste time
-	// trying to perform the other operations if we have been asked to shut
-	// down.
 	select {
 	case <-stopCh:
 		return
@@ -145,12 +136,9 @@ RECONCILE:
 	}
 
 WAIT:
-	// Wait until leadership is lost or periodically reconcile as long as we
-	// are the leader, or when Serf events arrive.
 	for {
 		select {
 		case <-stopCh:
-			// Lost leadership.
 			return
 		case <-a.shutdownCh:
 			return
@@ -164,8 +152,6 @@ WAIT:
 	}
 }
 
-// reconcile is used to reconcile the differences between Serf
-// membership and what is reflected in our strongly consistent store.
 func (a *Agent) reconcile() error {
 	defer metrics.MeasureSince(
 		[]string{"taskvault", "leader", "reconcile"}, time.Now(),
@@ -180,9 +166,7 @@ func (a *Agent) reconcile() error {
 	return nil
 }
 
-// reconcileMember is used to do an async reconcile of a single serf member
 func (a *Agent) reconcileMember(member serf.Member) error {
-	// Check if this is a member we should handle
 	valid, parts := isServer(member)
 	if !valid || parts.Region != a.config.Region {
 		return nil
@@ -209,10 +193,6 @@ func (a *Agent) reconcileMember(member serf.Member) error {
 	return nil
 }
 
-// establishLeadership is invoked once we become leader and are able
-// to invoke an initial barrier. The barrier is used to ensure any
-// previously inflight transactions have been committed and that our
-// state is up-to-date.
 func (a *Agent) establishLeadership(stopCh chan struct{}) error {
 	defer metrics.MeasureSince(
 		[]string{
@@ -224,24 +204,17 @@ func (a *Agent) establishLeadership(stopCh chan struct{}) error {
 	return nil
 }
 
-// revokeLeadership is invoked once we step down as leader.
-// This is used to cleanup any state that may be specific to a leader.
 func (a *Agent) revokeLeadership() error {
 	defer metrics.MeasureSince(
 		[]string{
 			"taskvault", "leader", "revoke_leadership",
 		}, time.Now(),
 	)
-	// Stop the scheduler, running jobs will continue to finish but we
-	// can not actively wait for them blocking the execution here.
-	// TODO: probably some logic for example scheduler stop
 
 	return nil
 }
 
-// addRaftPeer is used to add a new Raft peer when a taskvault server joins
 func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
-	// Check for possibility of multiple bootstrap nodes
 	members := a.serf.Members()
 	if parts.Bootstrap {
 		for _, member := range members {
@@ -257,9 +230,6 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 		}
 	}
 
-	// Processing ourselves could result in trying to remove ourselves to
-	// fix up our address, which would make us step down. This is only
-	// safe to attempt if there are multiple servers available.
 	addr := (&net.TCPAddr{IP: m.Addr, Port: parts.Port}).String()
 	configFuture := a.raft.GetConfiguration()
 	if err := configFuture.Error(); err != nil {
@@ -275,15 +245,8 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 		}
 	}
 
-	// See if it's already in the configuration. It's harmless to re-add it
-	// but we want to avoid doing that if possible to prevent useless Raft
-	// log entries. If the address is the same but the ID changed, remove the
-	// old server before adding the new one.
 	for _, server := range configFuture.Configuration().Servers {
-
-		// If the address or ID matches an existing server, see if we need to remove the old one first
 		if server.Address == raft.ServerAddress(addr) || server.ID == raft.ServerID(parts.ID) {
-			// Exit with no-op if this is being called on an existing server and both the ID and address match
 			if server.Address == raft.ServerAddress(addr) && server.ID == raft.ServerID(parts.ID) {
 				return nil
 			}
@@ -302,7 +265,6 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 		}
 	}
 
-	// Attempt to add as a peer
 	switch {
 	case minRaftProtocol >= 3:
 		addFuture := a.raft.AddVoter(
@@ -317,13 +279,7 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 	return nil
 }
 
-// removeRaftPeer is used to remove a Raft peer when a taskvault server leaves
-// or is reaped
 func (a *Agent) removeRaftPeer(m serf.Member, parts *ServerParts) error {
-
-	// Do not remove ourself. This can only happen if the current leader
-	// is leaving. Instead, we should allow a follower to take-over and
-	// deregister us later.
 	if strings.EqualFold(m.Name, a.config.NodeName) {
 		a.logger.Warn(
 			"removing self should be done by follower", "name",
@@ -332,18 +288,13 @@ func (a *Agent) removeRaftPeer(m serf.Member, parts *ServerParts) error {
 		return nil
 	}
 
-	// See if it's already in the configuration. It's harmless to re-remove it
-	// but we want to avoid doing that if possible to prevent useless Raft
-	// log entries.
 	configFuture := a.raft.GetConfiguration()
 	if err := configFuture.Error(); err != nil {
 		a.logger.WithError(err).Error("taskvault: failed to get raft configuration")
 		return err
 	}
 
-	// Pick which remove API to use based on how the server was added.
 	for _, server := range configFuture.Configuration().Servers {
-		// If we understand the new add/remove APIs and the server was added by ID, use the new remove API
 		if minRaftProtocol >= 2 && server.ID == raft.ServerID(parts.ID) {
 			a.logger.WithField(
 				"server", server.ID,

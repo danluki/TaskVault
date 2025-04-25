@@ -174,11 +174,9 @@ func (grpcc *GRPCClient) Leave(addr string) error {
 	return nil
 }
 
-// RaftRemovePeerByID implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) RaftRemovePeerByID(addr string, peerID string) error {
 	var conn *grpc.ClientConn
 
-	// Initiate a connection with the server
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
 		grpcc.logger.WithError(err).WithFields(
@@ -191,7 +189,6 @@ func (grpcc *GRPCClient) RaftRemovePeerByID(addr string, peerID string) error {
 	}
 	defer conn.Close()
 
-	// Synchronous call
 	d := types2.NewTaskvaultClient(conn)
 	_, err = d.RaftRemovePeerByID(
 		context.Background(),
@@ -210,18 +207,15 @@ func (grpcc *GRPCClient) RaftRemovePeerByID(addr string, peerID string) error {
 	return nil
 }
 
-// UpdateValue implements TaskvaultGRPCClient.
 func (grpcc *GRPCClient) UpdateValue(string, string) (*Pair, error) {
 	panic("unimplemented")
 }
 
-// RaftGetConfiguration implements TaskvaultGRPCServer.
 func (g *GRPCClient) RaftGetConfiguration(
 	addr string,
 ) (*types2.RaftGetConfigurationResponse, error) {
 	var conn *grpc.ClientConn
 
-	// Initiate a connection with the server
 	conn, err := g.Connect(addr)
 	if err != nil {
 		g.logger.WithError(err).WithFields(
@@ -234,7 +228,6 @@ func (g *GRPCClient) RaftGetConfiguration(
 	}
 	defer conn.Close()
 
-	// Synchronous call
 	d := types2.NewTaskvaultClient(conn)
 	res, err := d.RaftGetConfiguration(context.Background(), &emptypb.Empty{})
 	if err != nil {
