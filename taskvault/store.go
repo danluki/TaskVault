@@ -4,16 +4,18 @@ import (
 	"io"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/buntdb"
+	"go.uber.org/zap"
 )
 
 type Store struct {
 	db   *buntdb.DB
 	lock *sync.Mutex
 
-	logger *logrus.Entry
+	logger *zap.SugaredLogger
 }
+
+var _ SyncraStorage = (*Store)(nil)
 
 func (s *Store) DeleteValue(key string) error {
 	err := s.db.Update(func(tx *buntdb.Tx) error {
@@ -84,14 +86,14 @@ func (s *Store) UpdateValue(key string, value string) error {
 	return s.SetValue(key, value)
 }
 
-var _ Storage = (*Store)(nil)
+var _ SyncraStorage = (*Store)(nil)
 
 type kv struct {
 	Key   string
 	Value string
 }
 
-func NewStore(logger *logrus.Entry) (*Store, error) {
+func NewStore(logger *zap.SugaredLogger) (*Store, error) {
 	db, err := buntdb.Open(":memory:")
 	if err != nil {
 		return nil, err

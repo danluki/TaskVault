@@ -7,21 +7,21 @@ import (
 	"time"
 
 	"github.com/hashicorp/raft"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type RaftLayer struct {
 	TLSConfig *tls.Config
 
 	ln     net.Listener
-	logger *logrus.Entry
+	logger *zap.SugaredLogger
 }
 
-func NewRaftLayer(logger *logrus.Entry) *RaftLayer {
+func NewRaftLayer(logger *zap.SugaredLogger) *RaftLayer {
 	return &RaftLayer{logger: logger}
 }
 
-func NewTLSRaftLayer(tlsConfig *tls.Config, logger *logrus.Entry) *RaftLayer {
+func NewTLSRaftLayer(tlsConfig *tls.Config, logger *zap.SugaredLogger) *RaftLayer {
 	return &RaftLayer{
 		TLSConfig: tlsConfig,
 		logger:    logger,

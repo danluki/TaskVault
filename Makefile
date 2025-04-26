@@ -2,13 +2,6 @@
 .PHONY: clean
 clean:
 	rm -f main
-	rm -f *_SHA256SUMS
-	rm -f taskvault-*
-	rm -rf build/*
-	rm -rf builder/skel/*
-	rm -f *.deb
-	rm -f *.rpm
-	rm -f *.tar.gz
 	rm -rf tmp
 	rm -rf node-ui/dist
 	rm -rf node-ui/node_modules

@@ -1,8 +1,12 @@
 package taskvault
 
-import "io"
+import (
+	"io"
 
-type Storage interface {
+	"github.com/hashicorp/raft"
+)
+
+type SyncraStorage interface {
 	GetValue(key string) (string, error)
 	UpdateValue(key string, value string) error
 	SetValue(key string, value string) error
@@ -11,4 +15,10 @@ type Storage interface {
 	Shutdown() error
 	Snapshot(w io.WriteCloser) error
 	Restore(r io.ReadCloser) error
+}
+
+type RaftStore interface {
+	raft.StableStore
+	raft.LogStore
+	Close() error
 }

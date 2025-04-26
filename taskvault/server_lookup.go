@@ -21,6 +21,8 @@ func NewServerLookup() *ServerLookup {
 	}
 }
 
+var _ raft.ServerAddressProvider = (*ServerLookup)(nil)
+
 func (sl *ServerLookup) AddServer(server *ServerParts) {
 	sl.lock.Lock()
 	defer sl.lock.Unlock()

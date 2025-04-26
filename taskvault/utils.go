@@ -43,8 +43,7 @@ func UserAgent() string {
 	return fmt.Sprintf("taskvault/%s", Version)
 }
 
-func isServer(m serf.Member) (bool, *ServerParts) {
-	id := m.Name
+func toSevrerPart(m serf.Member) *ServerParts {
 	_, bootstrap := m.Tags["bootstrap"]
 
 	expect := 0
@@ -53,7 +52,7 @@ func isServer(m serf.Member) (bool, *ServerParts) {
 	if ok {
 		expect, err = strconv.Atoi(expectStr)
 		if err != nil {
-			return false, nil
+			return nil
 		}
 	}
 	if expect == 1 {
@@ -68,7 +67,7 @@ func isServer(m serf.Member) (bool, *ServerParts) {
 	portStr := m.Tags["port"]
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		return false, nil
+		return nil
 	}
 
 	buildVersion, err := version.NewVersion(m.Tags["version"])
@@ -78,9 +77,10 @@ func isServer(m serf.Member) (bool, *ServerParts) {
 
 	addr := &net.TCPAddr{IP: m.Addr, Port: port}
 	rpcAddr := &net.TCPAddr{IP: rpcIP, Port: port}
+
 	parts := &ServerParts{
 		Name:         m.Name,
-		ID:           id,
+		ID:           m.Name,
 		Port:         port,
 		Bootstrap:    bootstrap,
 		Expect:       expect,
@@ -89,5 +89,6 @@ func isServer(m serf.Member) (bool, *ServerParts) {
 		BuildVersion: buildVersion,
 		Status:       m.Status,
 	}
-	return true, parts
+
+	return parts
 }

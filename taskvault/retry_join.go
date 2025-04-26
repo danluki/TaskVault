@@ -3,12 +3,13 @@ package taskvault
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
 	discover "github.com/hashicorp/go-discover"
 	discoverk8s "github.com/hashicorp/go-discover/provider/k8s"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func (a *Agent) retryJoinLAN() {
@@ -36,7 +37,7 @@ type retryJoiner struct {
 	join func([]string) (int, error)
 }
 
-func (r *retryJoiner) retryJoin(logger *logrus.Entry) error {
+func (r *retryJoiner) retryJoin(logger *zap.SugaredLogger) error {
 	if len(r.addrs) == 0 {
 		return nil
 	}
@@ -55,7 +56,7 @@ func (r *retryJoiner) retryJoin(logger *logrus.Entry) error {
 		return err
 	}
 
-	logger.WithField("cluster", r.cluster).Info("agent: Joining cluster...")
+	logger.Info("agent: Joining cluster...", zap.String("cluster", r.cluster))
 	attempt := 0
 	for {
 		var addrs []string
@@ -64,31 +65,23 @@ func (r *retryJoiner) retryJoin(logger *logrus.Entry) error {
 		for _, addr := range r.addrs {
 			switch {
 			case strings.Contains(addr, "provider="):
-				servers, err := disco.Addrs(
+				servers, _ := disco.Addrs(
 					addr,
 					log.New(
-						logger.Logger.Writer(), "",
+						os.Stdout, "",
 						log.LstdFlags|log.Lshortfile,
 					),
 				)
-				if err != nil {
-					logger.WithError(err).
-						WithField("cluster", r.cluster).
-						Error("agent: Error Joining")
-				} else {
-					addrs = append(addrs, servers...)
-					logger.Infof(
-						"agent: Discovered %s servers: %s", r.cluster,
-						strings.Join(servers, " "),
-					)
-				}
+
+				addrs = append(addrs, servers...)
+				logger.Infof(
+					"agent: Discovered %s servers: %s", r.cluster,
+					strings.Join(servers, " "),
+				)
 
 			default:
 				ipAddr, err := ParseSingleIPTemplate(addr)
 				if err != nil {
-					logger.WithField("addr", addr).
-						WithError(err).
-						Error("agent: Error parsing retry-join ip template")
 					continue
 				}
 				addrs = append(addrs, ipAddr)
@@ -118,9 +111,10 @@ func (r *retryJoiner) retryJoin(logger *logrus.Entry) error {
 			)
 		}
 
-		logger.Warningf(
-			"agent: Join %s failed: %v, retrying in %v", r.cluster, err,
-			r.interval,
+		logger.Warn("agent: Join failed",
+			zap.String("cluster", r.cluster),
+			zap.Error(err),
+			zap.Duration("retry_interval", r.interval),
 		)
 		time.Sleep(r.interval)
 	}

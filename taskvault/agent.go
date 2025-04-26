@@ -5,24 +5,24 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
-	"github.com/armon/go-metrics"
 	"github.com/danluki/taskvault/pkg/types"
 	"github.com/hashicorp/memberlist"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/hashicorp/serf/serf"
-	"github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
 	raftTimeout      = 30 * time.Second
 	raftLogCacheSize = 512
-	minRaftProtocol  = 3
 	raftMultiplier   = 1
 )
 
@@ -34,10 +34,11 @@ var (
 type Node = serf.Member
 
 type Agent struct {
-	Store      Storage
-	config     *Config
-	eventCh    chan serf.Event
-	shutdownCh chan struct{}
+	Store  SyncraStorage
+	config *Config
+
+	serfEventer chan serf.Event
+	shutdowner  chan struct{}
 
 	raftTransport *raft.NetworkTransport
 	raft          *raft.Raft
@@ -47,74 +48,61 @@ type Agent struct {
 	GRPCClient    TaskvaultGRPCClient
 	raftLayer     *RaftLayer
 	reconcileCh   chan serf.Member
-	raftInmem     *raft.InmemStore
 	GRPCServer    TaskvaultGRPCServer
-	logger        *logrus.Entry
 	retryJoinCh   chan error
 	leaderCh      <-chan bool
 	serverLookup  *ServerLookup
 	listener      net.Listener
+
+	logger *zap.SugaredLogger
 }
 
-type RaftStore interface {
-	raft.StableStore
-	raft.LogStore
-	Close() error
-}
-
-type AgentOption func(agent *Agent)
-
-func NewAgent(config *Config, options ...AgentOption) *Agent {
+func NewAgent(config *Config) *Agent {
 	agent := &Agent{
 		config:       config,
 		retryJoinCh:  make(chan error),
 		serverLookup: NewServerLookup(),
 	}
 
-	for _, option := range options {
-		option(agent)
-	}
-
 	return agent
 }
 
 func (a *Agent) Start() error {
-	log := InitLogger(a.config.LogLevel, a.config.NodeName)
-	a.logger = log
+	a.logger = InitLogger(a.config.LogLevel, a.config.NodeName)
 
-	if err := a.config.normalizeAddrs(); err != nil && !errors.Is(
-		err, ErrResolvingHost,
-	) {
-		return err
-	}
-
-	s, err := a.setupSerf()
-	if err != nil {
-		return fmt.Errorf("agent: Can not setup serf, %s", err)
-	}
-	a.serf = s
-
-	if len(a.config.RetryJoinLAN) > 0 {
-		a.retryJoinLAN()
-	} else {
-		_, err := a.join(a.config.StartJoin, true)
-		if err != nil {
-			a.logger.WithError(err).WithField(
-				"servers", a.config.StartJoin,
-			).Warn("agent: Can not join")
+	var err error
+	if err = a.config.normalizeAddrs(); err != nil {
+		if !errors.Is(err, ErrResolvingHost) {
+			return err
 		}
 	}
 
-	if a.config.AdvertiseRPCPort <= 0 {
+	a.serf, err = a.setupSerf()
+	if err != nil {
+		return fmt.Errorf("agent: Can not setup serf, %s", err)
+	}
+
+	if len(a.config.RetryJoinLAN) == 0 {
+		_, err := a.join(a.config.StartJoin, true)
+		if err != nil {
+			a.logger.With(
+				zap.Error(err),
+				zap.Any("servers", a.config.StartJoin),
+			).Warn("agent: Can not join")
+		}
+	} else {
+		a.retryJoinLAN()
+	}
+
+	if a.config.AdvertiseRPCPort == 0 {
 		a.config.AdvertiseRPCPort = a.config.RPCPort
 	}
 
 	addr := a.bindRPCAddr()
-	l, err := net.Listen("tcp", addr)
+	a.listener, err = net.Listen("tcp", addr)
 	if err != nil {
-		a.logger.Fatal(err)
+		panic(err)
 	}
-	a.listener = l
 
 	a.StartServer()
 
@@ -167,8 +155,8 @@ func (a *Agent) setupRaft() error {
 	}
 
 	logger := io.Discard
-	if a.logger.Logger.Level == logrus.DebugLevel {
-		logger = a.logger.Logger.Writer()
+	if a.logger.Level() == zapcore.DebugLevel {
+		logger = os.Stdout
 	}
 
 	transConfig := &raft.NetworkTransportConfig{
@@ -195,7 +183,6 @@ func (a *Agent) setupRaft() error {
 	var snapshots raft.SnapshotStore
 	if a.config.DevMode {
 		store := raft.NewInmemStore()
-		a.raftInmem = store
 		stableStore = store
 		logStore = store
 		snapshots = raft.NewDiscardSnapshotStore()
@@ -328,14 +315,14 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 		a.logger.Fatal(err)
 	}
 
-	a.eventCh = make(chan serf.Event, 2048)
-	serfConfig.EventCh = a.eventCh
+	a.serfEventer = make(chan serf.Event, 4096)
+	serfConfig.EventCh = a.serfEventer
 
 	a.logger.Info("agent: taskvault agent starting")
 
-	if a.logger.Logger.Level == logrus.DebugLevel {
-		serfConfig.LogOutput = a.logger.Logger.Writer()
-		serfConfig.MemberlistConfig.LogOutput = a.logger.Logger.Writer()
+	if a.logger.Level() == zapcore.DebugLevel {
+		serfConfig.LogOutput = os.Stdout
+		serfConfig.MemberlistConfig.LogOutput = os.Stdout
 	} else {
 		serfConfig.LogOutput = io.Discard
 		serfConfig.MemberlistConfig.LogOutput = io.Discard
@@ -349,12 +336,11 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	return serf, nil
 }
 
-
 func (a *Agent) StartServer() {
 	if a.Store == nil {
 		s, err := NewStore(a.logger)
 		if err != nil {
-			a.logger.WithError(err).Fatal("taskvault: Error initializing store")
+			panic(err)
 		}
 		a.Store = s
 	}
@@ -382,7 +368,7 @@ func (a *Agent) StartServer() {
 	}
 
 	if err := a.GRPCServer.Serve(grpcl); err != nil {
-		a.logger.WithError(err).Fatal("agent: RPC server failed to start")
+		a.logger.With(zap.Error(err)).Fatal("agent: RPC server failed to start")
 	}
 
 	if err := a.raftLayer.Open(raftl); err != nil {
@@ -390,7 +376,7 @@ func (a *Agent) StartServer() {
 	}
 
 	if err := a.setupRaft(); err != nil {
-		a.logger.WithError(err).Fatal("agent: Raft layer failed to start")
+		a.logger.With(zap.Error(err)).Fatal("agent: Raft layer failed to start")
 	}
 
 	go func() {
@@ -417,8 +403,8 @@ func (a *Agent) IsLeader() bool {
 
 func (a *Agent) Servers() (members []*ServerParts) {
 	for _, member := range a.serf.Members() {
-		ok, parts := isServer(member)
-		if !ok || member.Status != serf.StatusAlive {
+		parts := toSevrerPart(member)
+		if parts == nil || member.Status != serf.StatusAlive {
 			continue
 		}
 		members = append(members, parts)
@@ -427,26 +413,19 @@ func (a *Agent) Servers() (members []*ServerParts) {
 }
 
 func (a *Agent) eventLoop() {
-	serfShutdownCh := a.serf.ShutdownCh()
+	internalShutdowner := a.serf.ShutdownCh()
 	a.logger.Info("agent: Listen for events")
 	for {
 		select {
-		case e := <-a.eventCh:
-			a.logger.WithField(
-				"event", e.String(),
-			).Info("agent: Received event")
-			metrics.IncrCounter(
-				[]string{"agent", "event_received", e.String()}, 1,
-			)
+		case e := <-a.serfEventer:
+			a.logger.With(zap.String("event", e.String())).Info("agent: Received event")
 
 			if me, ok := e.(serf.MemberEvent); ok {
 				for _, member := range me.Members {
-					a.logger.WithFields(
-						logrus.Fields{
-							"node":   a.config.NodeName,
-							"member": member.Name,
-							"event":  e.EventType(),
-						},
+					a.logger.With(
+						zap.String("node", a.config.NodeName),
+						zap.String("member", member.Name),
+						zap.Any("event", e.EventType()),
 					).Debug("agent: Member event")
 				}
 
@@ -464,13 +443,11 @@ func (a *Agent) eventLoop() {
 					a.localMemberEvent(me)
 				case serf.EventUser, serf.EventQuery:
 				default:
-					a.logger.WithField(
-						"event", e.String(),
-					).Warn("agent: Unhandled serf event")
+					a.logger.Warn("agent: Unhandled serf event", zap.String("event", e.String()))
 				}
 			}
 
-		case <-serfShutdownCh:
+		case <-internalShutdowner:
 			a.logger.Warn("agent: Serf shutdown detected, quitting")
 			return
 		}
@@ -486,6 +463,7 @@ func (a *Agent) join(addrs []string, replay bool) (n int, err error) {
 	if err != nil {
 		a.logger.Warnf("agent: error joining: %v", err)
 	}
+
 	return
 }
 

@@ -6,7 +6,7 @@ import (
 
 	types2 "github.com/danluki/taskvault/pkg/types"
 	metrics "github.com/hashicorp/go-metrics"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -26,13 +26,13 @@ type TaskvaultGRPCClient interface {
 type GRPCClient struct {
 	dialOpt []grpc.DialOption
 	agent   *Agent
-	logger  *logrus.Entry
+	logger  *zap.SugaredLogger
 }
 
 func NewGRPCClient(
 	dialOpt grpc.DialOption,
 	agent *Agent,
-	logger *logrus.Entry,
+	logger *zap.SugaredLogger,
 ) TaskvaultGRPCClient {
 	if dialOpt == nil {
 		dialOpt = grpc.WithInsecure()
@@ -65,12 +65,10 @@ func (grpcc *GRPCClient) CreateValue(key string, value string) (*Pair, error) {
 
 	conn, err := grpcc.Connect(string(addr))
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "CreateValue",
-				"server_addr": addr,
-			},
-		).Error("grpc: error dialing.")
+		grpcc.logger.Error("grpc: error dialing",
+			zap.Error(err),
+			zap.String("method", "CreateValue"),
+		)
 		return nil, err
 	}
 	defer conn.Close()
@@ -83,12 +81,10 @@ func (grpcc *GRPCClient) CreateValue(key string, value string) (*Pair, error) {
 		},
 	)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "GetValue",
-				"server_addr": addr,
-			},
-		).Error("grpc: Error calling gRPC method")
+		grpcc.logger.Error("grpc: error calling",
+			zap.Error(err),
+			zap.String("method", "GetValue"),
+		)
 		return nil, err
 	}
 
@@ -112,12 +108,6 @@ func (grpcc *GRPCClient) GetValue(addr, key string) (*Pair, error) {
 
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "GetJob",
-				"server_addr": addr,
-			},
-		).Error("grpc: error dialing.")
 		return nil, err
 	}
 	defer conn.Close()
@@ -129,12 +119,6 @@ func (grpcc *GRPCClient) GetValue(addr, key string) (*Pair, error) {
 		},
 	)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "GetValue",
-				"server_addr": addr,
-			},
-		).Error("grpc: Error calling gRPC method")
 		return nil, err
 	}
 
@@ -149,12 +133,6 @@ func (grpcc *GRPCClient) Leave(addr string) error {
 
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "Leave",
-				"server_addr": addr,
-			},
-		).Error("grpc: error dialing.")
 		return err
 	}
 	defer conn.Close()
@@ -162,12 +140,6 @@ func (grpcc *GRPCClient) Leave(addr string) error {
 	d := types2.NewTaskvaultClient(conn)
 	_, err = d.Leave(context.Background(), &emptypb.Empty{})
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "Leave",
-				"server_addr": addr,
-			},
-		).Error("grpc: Error calling gRPC method")
 		return err
 	}
 
@@ -179,12 +151,6 @@ func (grpcc *GRPCClient) RaftRemovePeerByID(addr string, peerID string) error {
 
 	conn, err := grpcc.Connect(addr)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "RaftRemovePeerByID",
-				"server_addr": addr,
-			},
-		).Error("grpc: error dialing.")
 		return err
 	}
 	defer conn.Close()
@@ -195,12 +161,6 @@ func (grpcc *GRPCClient) RaftRemovePeerByID(addr string, peerID string) error {
 		&types2.RaftRemovePeerByIDRequest{Id: peerID},
 	)
 	if err != nil {
-		grpcc.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "RaftRemovePeerByID",
-				"server_addr": addr,
-			},
-		).Error("grpc: Error calling gRPC method")
 		return err
 	}
 
@@ -218,12 +178,6 @@ func (g *GRPCClient) RaftGetConfiguration(
 
 	conn, err := g.Connect(addr)
 	if err != nil {
-		g.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "RaftGetConfiguration",
-				"server_addr": addr,
-			},
-		).Error("grpc: error dialing.")
 		return nil, err
 	}
 	defer conn.Close()
@@ -231,12 +185,6 @@ func (g *GRPCClient) RaftGetConfiguration(
 	d := types2.NewTaskvaultClient(conn)
 	res, err := d.RaftGetConfiguration(context.Background(), &emptypb.Empty{})
 	if err != nil {
-		g.logger.WithError(err).WithFields(
-			logrus.Fields{
-				"method":      "RaftGetConfiguration",
-				"server_addr": addr,
-			},
-		).Error("grpc: Error calling gRPC method")
 		return nil, err
 	}
 

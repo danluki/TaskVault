@@ -6,11 +6,11 @@ import (
 
 	"github.com/danluki/taskvault/pkg/types"
 	"github.com/hashicorp/go-uuid"
+	"go.uber.org/zap"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,10 +26,10 @@ type HTTPTransport struct {
 	Engine *gin.Engine
 
 	agent  *Agent
-	logger *logrus.Entry
+	logger *zap.SugaredLogger
 }
 
-func NewTransport(a *Agent, log *logrus.Entry) *HTTPTransport {
+func NewTransport(a *Agent, log *zap.SugaredLogger) *HTTPTransport {
 	return &HTTPTransport{
 		agent:  a,
 		logger: log,
@@ -54,15 +54,11 @@ func (h *HTTPTransport) ServeHTTP() {
 		h.UI(rootPath)
 	}
 
-	h.logger.WithFields(
-		logrus.Fields{
-			"address": h.agent.config.HTTPAddr,
-		},
-	).Info("api: Running HTTP server")
+	h.logger.Info("api: Running HTTP server", zap.String("address", h.agent.config.HTTPAddr))
 
 	go func() {
 		if err := h.Engine.Run(h.agent.config.HTTPAddr); err != nil {
-			h.logger.WithError(err).Error("api: Error starting HTTP server")
+			panic(err)
 		}
 	}()
 }
@@ -134,10 +130,11 @@ func (h *HTTPTransport) leaderHandler(c *gin.Context) {
 func (h *HTTPTransport) isLeaderHandler(c *gin.Context) {
 	isleader := h.agent.IsLeader()
 	if isleader {
-		renderJSON(c, http.StatusOK, "I am a leader")
-	} else {
-		renderJSON(c, http.StatusNotFound, "I am a follower")
+		renderJSON(c, http.StatusOK, "leader")
+		return
 	}
+
+	renderJSON(c, http.StatusNotFound, "follower")
 }
 
 func (h *HTTPTransport) leaveHandler(c *gin.Context) {
@@ -165,7 +162,6 @@ func (h *HTTPTransport) indexHandler(c *gin.Context) {
 func (h *HTTPTransport) pairsHandler(c *gin.Context) {
 	pairs, err := h.agent.Store.GetAllValues()
 	if err != nil {
-		h.logger.WithError(err).Error("api: Unable to get pairs, store not reachable.")
 		return
 	}
 

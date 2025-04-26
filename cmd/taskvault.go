@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/danluki/taskvault/pkg/logging"
 	"github.com/danluki/taskvault/taskvault"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -45,8 +44,6 @@ func initConfig() error {
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()
-
-	logrus.AddHook(&logging.LogSplitter{})
 
 	err := viper.ReadInConfig()
 	if err != nil {             

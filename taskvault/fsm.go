@@ -5,7 +5,7 @@ import (
 
 	"github.com/danluki/taskvault/pkg/types"
 	"github.com/hashicorp/raft"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -27,12 +27,12 @@ type LogApplier func(buf []byte, index uint64) interface{}
 type LogAppliers map[MessageType]LogApplier
 
 type taskvaultFSM struct {
-	store Storage
+	store SyncraStorage
 
-	logger *logrus.Entry
+	logger *zap.SugaredLogger
 }
 
-func newFSM(store Storage, logger *logrus.Entry) *taskvaultFSM {
+func newFSM(store SyncraStorage, logger *zap.SugaredLogger) *taskvaultFSM {
 	return &taskvaultFSM{
 		store:  store,
 		logger: logger,
@@ -43,7 +43,7 @@ func (d *taskvaultFSM) Apply(l *raft.Log) interface{} {
 	buf := l.Data
 	msgType := MessageType(buf[0])
 
-	d.logger.WithField("command", msgType).Debug("fsm: received command")
+	d.logger.Debug("fsm: received command", zap.Int8("command", int8(msgType)))
 
 	switch msgType {
 	case AddPairType:
@@ -110,7 +110,7 @@ func (d *taskvaultFSM) Restore(r io.ReadCloser) error {
 }
 
 type taskvaultSnapshot struct {
-	store Storage
+	store SyncraStorage
 }
 
 func (d *taskvaultSnapshot) Persist(sink raft.SnapshotSink) error {

@@ -16,86 +16,6 @@ var (
 	logLevel = "info"
 )
 
-func TestAgentCommand_runForElection(t *testing.T) {
-	dir, err := ioutil.TempDir("", "taskvault-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-
-	a1Name := "test1"
-	a2Name := "test2"
-	ip1, returnFn1 := testutil.TakeIP()
-	a1Addr := ip1.String()
-	defer returnFn1()
-	ip2, returnFn2 := testutil.TakeIP()
-	a2Addr := ip2.String()
-	defer returnFn2()
-
-	shutdownCh := make(chan struct{})
-	defer close(shutdownCh)
-
-	c := DefaultConfig()
-	c.BindAddr = a1Addr
-	c.StartJoin = []string{a2Addr}
-	c.NodeName = a1Name
-	c.LogLevel = logLevel
-	c.BootstrapExpect = 3
-	c.DevMode = true
-	c.DataDir = dir
-
-	a1 := NewAgent(c)
-	err = a1.Start()
-	require.NoError(t, err)
-
-	time.Sleep(2 * time.Second)
-
-	if a1.IsLeader() {
-		m, err := a1.leaderMember()
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Logf("%s is the current leader", m.Name)
-		assert.Equal(t, a1Name, m.Name)
-	}
-
-	c = DefaultConfig()
-	c.BindAddr = a2Addr
-	c.StartJoin = []string{a1Addr + ":8946"}
-	c.NodeName = a2Name
-	c.LogLevel = logLevel
-	c.BootstrapExpect = 3
-	c.DevMode = true
-	c.DataDir = dir
-
-	a2 := NewAgent(c)
-	err = a2.Start()
-	require.NoError(t, err)
-
-	time.Sleep(2 * time.Second)
-
-	c = DefaultConfig()
-	ip3, returnFn3 := testutil.TakeIP()
-	defer returnFn3()
-	c.BindAddr = ip3.String()
-	c.StartJoin = []string{a1Addr + ":8946"}
-	c.NodeName = "test3"
-	c.LogLevel = logLevel
-	c.BootstrapExpect = 3
-	c.DevMode = true
-	c.DataDir = dir
-
-	a3 := NewAgent(c)
-	err = a3.Start()
-	require.NoError(t, err)
-
-	time.Sleep(2 * time.Second)
-
-	_ = a1.Stop()
-
-	time.Sleep(2 * time.Second)
-	assert.True(t, (a2.IsLeader() || a3.IsLeader()))
-	log.Println(a3.IsLeader())
-}
-
 func TestEncrypt(t *testing.T) {
 	dir, err := ioutil.TempDir("", "taskvault-test")
 	require.NoError(t, err)
@@ -208,4 +128,84 @@ func TestAgentConfig(t *testing.T) {
 	assert.Equal(t, advAddr+":8946", a.config.AdvertiseAddr)
 
 	_ = a.Stop()
+}
+
+func TestAgentCommand_testElection(t *testing.T) {
+	dir, err := ioutil.TempDir("", "taskvault-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+
+	a1Name := "test1"
+	a2Name := "test2"
+	ip1, returnFn1 := testutil.TakeIP()
+	a1Addr := ip1.String()
+	defer returnFn1()
+	ip2, returnFn2 := testutil.TakeIP()
+	a2Addr := ip2.String()
+	defer returnFn2()
+
+	shutdownCh := make(chan struct{})
+	defer close(shutdownCh)
+
+	c := DefaultConfig()
+	c.BindAddr = a1Addr
+	c.StartJoin = []string{a2Addr}
+	c.NodeName = a1Name
+	c.LogLevel = logLevel
+	c.BootstrapExpect = 3
+	c.DevMode = true
+	c.DataDir = dir
+
+	a1 := NewAgent(c)
+	err = a1.Start()
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	if a1.IsLeader() {
+		m, err := a1.leaderMember()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("%s is the current leader", m.Name)
+		assert.Equal(t, a1Name, m.Name)
+	}
+
+	c = DefaultConfig()
+	c.BindAddr = a2Addr
+	c.StartJoin = []string{a1Addr + ":8946"}
+	c.NodeName = a2Name
+	c.LogLevel = logLevel
+	c.BootstrapExpect = 3
+	c.DevMode = true
+	c.DataDir = dir
+
+	a2 := NewAgent(c)
+	err = a2.Start()
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	c = DefaultConfig()
+	ip3, returnFn3 := testutil.TakeIP()
+	defer returnFn3()
+	c.BindAddr = ip3.String()
+	c.StartJoin = []string{a1Addr + ":8946"}
+	c.NodeName = "test3"
+	c.LogLevel = logLevel
+	c.BootstrapExpect = 3
+	c.DevMode = true
+	c.DataDir = dir
+
+	a3 := NewAgent(c)
+	err = a3.Start()
+	require.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	_ = a1.Stop()
+
+	time.Sleep(2 * time.Second)
+	assert.True(t, (a2.IsLeader() || a3.IsLeader()))
+	log.Println(a3.IsLeader())
 }
