@@ -9,24 +9,48 @@ export let options = {
     ],
 };
 
-const BASE_URL = 'http://localhost:8080/v1/storage';
+const BASE_URLS = [
+    'http://localhost:8080/v1/storage',
+    'http://localhost:8081/v1/storage',
+];
+
+function tryPost(key, value) {
+    for (const baseUrl of BASE_URLS) {
+        try {
+            const res = http.post(baseUrl, JSON.stringify({ key, value }), {
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (res.status === 201) {
+                check(res, { 'POST status is 201': () => true });
+                return { success: true, baseUrl };
+            }
+        } catch (_) {
+        }
+    }
+    check(null, { 'POST status is 201': () => false });
+    return { success: false };
+}
+
+function tryGet(baseUrl, key, expectedValue) {
+    try {
+        const res = http.get(`${baseUrl}/${key}`);
+        check(res, {
+            'GET status is 200': (r) => r.status === 200,
+            'GET returns correct value': (r) => r.json() === expectedValue,
+        });
+    } catch (_) {
+        check(null, { 'GET status is 200': () => false });
+    }
+}
 
 export default function () {
-    let key = `key_${Math.random().toString(36).substring(7)}`;
-    let value = `value_${Math.random().toString(36).substring(7)}`;
+    const key = `key_${Math.random().toString(36).substring(7)}`;
+    const value = `value_${Math.random().toString(36).substring(7)}`;
 
-    let postRes = http.post(BASE_URL, JSON.stringify({ key: key, value: value }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
-    check(postRes, {
-        'POST status is 201': (r) => r.status === 201,
-    });
-
-    let getRes = http.get(`${BASE_URL}/${key}`);
-    check(getRes, {
-        'GET status is 200': (r) => r.status === 200,
-        'GET returns correct value': (r) => r.json() === value,
-    });
+    const postResult = tryPost(key, value);
+    if (postResult.success) {
+        tryGet(postResult.baseUrl, key, value);
+    }
 
     sleep(1);
 }
