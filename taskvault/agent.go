@@ -1,6 +1,7 @@
 package taskvault
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -256,23 +257,21 @@ func (a *Agent) setupRaft() error {
 }
 
 func (a *Agent) setupSerf() (*serf.Serf, error) {
-	config := a.config
-
-	bindIP, bindPort, err := config.AddrParts(config.BindAddr)
+	bindIP, bindPort, err := a.config.AddrParts(a.config.BindAddr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid bind address: %s", err)
 	}
 
 	var advertiseIP string
 	var advertisePort int
-	if config.AdvertiseAddr != "" {
-		advertiseIP, advertisePort, err = config.AddrParts(config.AdvertiseAddr)
+	if a.config.AdvertiseAddr != "" {
+		advertiseIP, advertisePort, err = a.config.AddrParts(a.config.AdvertiseAddr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid advertise address: %s", err)
 		}
 	}
 
-	encryptKey, err := config.EncryptBytes()
+	encryptKey, err := base64.StdEncoding.DecodeString(a.config.EncryptKey)
 	if err != nil {
 		return nil, fmt.Errorf("invalid encryption key: %s", err)
 	}
@@ -288,7 +287,7 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 		serfConfig.Tags["expect"] = fmt.Sprintf("%d", a.config.BootstrapExpect)
 	}
 
-	switch config.Profile {
+	switch a.config.Profile {
 	case "lan":
 		serfConfig.MemberlistConfig = memberlist.DefaultLANConfig()
 	case "wan":
@@ -296,7 +295,7 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	case "local":
 		serfConfig.MemberlistConfig = memberlist.DefaultLocalConfig()
 	default:
-		return nil, fmt.Errorf("unknown profile: %s", config.Profile)
+		return nil, fmt.Errorf("unknown profile: %s", a.config.Profile)
 	}
 
 	serfConfig.MemberlistConfig.BindAddr = bindIP
@@ -304,12 +303,12 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 	serfConfig.MemberlistConfig.AdvertiseAddr = advertiseIP
 	serfConfig.MemberlistConfig.AdvertisePort = advertisePort
 	serfConfig.MemberlistConfig.SecretKey = encryptKey
-	serfConfig.NodeName = config.NodeName
+	serfConfig.NodeName = a.config.NodeName
 	serfConfig.CoalescePeriod = 3 * time.Second
 	serfConfig.QuiescentPeriod = time.Second
 	serfConfig.UserCoalescePeriod = 3 * time.Second
 	serfConfig.UserQuiescentPeriod = time.Second
-	serfConfig.ReconnectTimeout, err = time.ParseDuration(config.SerfReconnectTimeout)
+	serfConfig.ReconnectTimeout, err = time.ParseDuration(a.config.SerfReconnectTimeout)
 
 	if err != nil {
 		a.logger.Fatal(err)
@@ -345,9 +344,7 @@ func (a *Agent) StartServer() {
 		a.Store = s
 	}
 
-	if a.HTTPTransport == nil {
-		a.HTTPTransport = NewTransport(a, a.logger)
-	}
+	a.HTTPTransport = NewTransport(a, a.logger)
 	a.HTTPTransport.ServeHTTP()
 
 	tcpm := cmux.New(a.listener)
@@ -363,10 +360,7 @@ func (a *Agent) StartServer() {
 
 	raftl = tcpm.Match(cmux.Any())
 
-	if a.GRPCServer == nil {
-		a.GRPCServer = NewGRPCServer(a, a.logger)
-	}
-
+	a.GRPCServer = NewGRPCServer(a, a.logger)
 	if err := a.GRPCServer.Serve(grpcl); err != nil {
 		a.logger.With(zap.Error(err)).Fatal("agent: RPC server failed to start")
 	}
@@ -384,6 +378,7 @@ func (a *Agent) StartServer() {
 			a.logger.Fatal(err)
 		}
 	}()
+
 	go a.monitorLeadership()
 }
 
@@ -484,6 +479,7 @@ func (a *Agent) applySetPair(pair *types.Pair) error {
 	if err != nil {
 		return err
 	}
+	
 	af := a.raft.Apply(cmd, raftTimeout)
 	if err := af.Error(); err != nil {
 		return err

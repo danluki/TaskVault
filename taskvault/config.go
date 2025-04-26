@@ -1,9 +1,6 @@
 package taskvault
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -246,12 +243,6 @@ func normalizeAdvertise(
 	if addr != "" {
 		_, _, err = net.SplitHostPort(addr)
 		if err != nil {
-			if !isMissingPort(err) && !isTooManyColons(err) {
-				return "", fmt.Errorf(
-					"Error parsing advertise address %q: %v", addr, err,
-				)
-			}
-
 			return net.JoinHostPort(addr, strconv.Itoa(defport)), nil
 		}
 
@@ -286,16 +277,6 @@ func normalizeAdvertise(
 	return net.JoinHostPort(addr, strconv.Itoa(defport)), nil
 }
 
-func isMissingPort(err error) bool {
-	const missingPort = "missing port in address"
-	return err != nil && strings.Contains(err.Error(), missingPort)
-}
-
-func isTooManyColons(err error) bool {
-	const tooManyColons = "too many colons in address"
-	return err != nil && strings.Contains(err.Error(), tooManyColons)
-}
-
 func (c *Config) AddrParts(address string) (string, int, error) {
 	checkAddr := address
 
@@ -315,17 +296,4 @@ START:
 	}
 
 	return addr.IP.String(), addr.Port, nil
-}
-
-func (c *Config) EncryptBytes() ([]byte, error) {
-	return base64.StdEncoding.DecodeString(c.EncryptKey)
-}
-
-func (c *Config) Hash() (string, error) {
-	b, err := json.Marshal(c)
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(b)
-	return base64.StdEncoding.EncodeToString(sum[:]), nil
 }
