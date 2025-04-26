@@ -43,7 +43,7 @@ func UserAgent() string {
 	return fmt.Sprintf("taskvault/%s", Version)
 }
 
-func toSevrerPart(m serf.Member) *ServerParts {
+func toServerPart(m serf.Member) *ServerParts {
 	_, bootstrap := m.Tags["bootstrap"]
 
 	expect := 0

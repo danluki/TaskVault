@@ -171,7 +171,7 @@ func (g *GRPCServer) RaftGetConfiguration(
 
 	serverMap := make(map[raft.ServerAddress]serf.Member)
 	for _, member := range g.agent.serf.Members() {
-		parts := toSevrerPart(member)
+		parts := toServerPart(member)
 		if parts == nil {
 			continue
 		}

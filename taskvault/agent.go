@@ -397,7 +397,7 @@ func (a *Agent) IsLeader() bool {
 
 func (a *Agent) Servers() (members []*ServerParts) {
 	for _, member := range a.serf.Members() {
-		parts := toSevrerPart(member)
+		parts := toServerPart(member)
 		if parts == nil || member.Status != serf.StatusAlive {
 			continue
 		}

@@ -17,7 +17,7 @@ const (
 
 func (a *Agent) nodeJoin(me serf.MemberEvent) {
 	for _, m := range me.Members {
-		parts := toSevrerPart(m)
+		parts := toServerPart(m)
 		if parts == nil {
 			continue
 		}
@@ -51,7 +51,7 @@ func (a *Agent) maybeBootstrap() {
 	var servers []ServerParts
 	voters := 0
 	for _, member := range members {
-		parts := toSevrerPart(member)
+		parts := toServerPart(member)
 		if parts == nil {
 			continue
 		}
@@ -131,7 +131,7 @@ func (a *Agent) maybeBootstrap() {
 
 func (a *Agent) nodeFailed(me serf.MemberEvent) {
 	for _, m := range me.Members {
-		parts := toSevrerPart(m)
+		parts := toServerPart(m)
 		if parts == nil {
 			continue
 		}
@@ -146,10 +146,8 @@ func (a *Agent) localMemberEvent(me serf.MemberEvent) {
 		return
 	}
 
-	isReap := me.EventType() == serf.EventMemberReap
-
 	for _, m := range me.Members {
-		if isReap {
+		if me.EventType() == serf.EventMemberReap {
 			m.Status = StatusReap
 		}
 		select {
@@ -161,7 +159,7 @@ func (a *Agent) localMemberEvent(me serf.MemberEvent) {
 
 func (a *Agent) lanNodeUpdate(me serf.MemberEvent) {
 	for _, m := range me.Members {
-		parts := toSevrerPart(m)
+		parts := toServerPart(m)
 		if parts == nil {
 			continue
 		}

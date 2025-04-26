@@ -27,43 +27,64 @@ const addPair = async () => {
     return;
   }
 
-  try {
-    const response = await fetch("http://localhost:8080/v1/storage", {
+  const requestBody = JSON.stringify({
+    key: keyInput.value,
+    value: valueInput.value,
+  });
+
+  const sendRequest = async (url: any) => {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        key: keyInput.value,
-        value: valueInput.value,
-      }),
+      body: requestBody,
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
+  };
 
+  try {
+    await sendRequest("http://localhost:8080/v1/storage");
+    
     toast({
       description: 'Pair added successfully.',
     });
 
     keyInput.value = "";
     valueInput.value = "";
-    storageTable.pagination.value.pageIndex = storageTable.pagination.value.pageIndex - 1
-    storageTable.pagination.value.pageIndex = storageTable.pagination.value.pageIndex + 1
+    storageTable.pagination.value.pageIndex = storageTable.pagination.value.pageIndex; 
   } catch (error) {
-    toast({
-      title: 'Uh oh! Something went wrong.',
-      description: 'Some error occured.',
-      variant: 'destructive',
-      action: h(ToastAction, {
-        altText: 'Try again',
-      }, {
-        default: () => 'Try again',
-      }),
-    });
+    console.error('First request failed, trying fallback...', error);
+
+    try {
+      await sendRequest("http://localhost:8081/v1/storage");
+
+      toast({
+        description: 'Pair added successfully.',
+      });
+
+      keyInput.value = "";
+      valueInput.value = "";
+      storageTable.pagination.value.pageIndex = storageTable.pagination.value.pageIndex;
+    } catch (fallbackError) {
+      console.error('Both requests failed.', fallbackError);
+
+      toast({
+        title: 'Uh oh! Something went wrong.',
+        description: 'Could not add the pair after retrying.',
+        variant: 'destructive',
+        action: h(ToastAction, {
+          altText: 'Try again',
+        }, {
+          default: () => 'Try again',
+        }),
+      });
+    }
   }
-}
+};
 
 </script>
 

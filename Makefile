@@ -22,11 +22,14 @@ proto: pkg/types
 types/%.pb.go: proto/%.proto
 	protoc -I proto/ --go_out=types --go_opt=paths=source_relative --go-grpc_out=types --go-grpc_opt=paths=source_relative $<
 
+.PHONY: ui
 ui: taskvault/ui-dist
 
+.PHONY: main
 main: taskvault/ui-dist pkg/types  *.go */*.go */*/*.go
 	go mod tidy
 	go build main.go
 
+.PHONY: dev
 dev:
 	go run main.go agent --bootstrap=true

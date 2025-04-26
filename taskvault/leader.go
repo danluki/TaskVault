@@ -117,7 +117,7 @@ func (a *Agent) reconcile() error {
 }
 
 func (a *Agent) reconcileMember(member serf.Member) error {
-	parts := toSevrerPart(member)
+	parts := toServerPart(member)
 	if parts == nil {
 		return nil
 	}
@@ -145,7 +145,7 @@ func (a *Agent) addRaftPeer(m serf.Member, parts *ServerParts) error {
 	members := a.serf.Members()
 	if parts.Bootstrap {
 		for _, member := range members {
-			parts := toSevrerPart(member)
+			parts := toServerPart(member)
 			if parts == nil {
 				continue
 			}
