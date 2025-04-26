@@ -200,7 +200,7 @@ func (a *Agent) setupRaft() error {
 		}
 
 		if a.raftStore == nil {
-			s, err := raftboltdb.NewBoltStore(
+			a.raftStore, err = raftboltdb.NewBoltStore(
 				filepath.Join(
 					a.config.DataDir, "raft", "raft.db",
 				),
@@ -208,7 +208,6 @@ func (a *Agent) setupRaft() error {
 			if err != nil {
 				return fmt.Errorf("error creating new raft store: %s", err)
 			}
-			a.raftStore = s
 		}
 		stableStore = a.raftStore
 
@@ -479,7 +478,7 @@ func (a *Agent) applySetPair(pair *types.Pair) error {
 	if err != nil {
 		return err
 	}
-	
+
 	af := a.raft.Apply(cmd, raftTimeout)
 	if err := af.Error(); err != nil {
 		return err

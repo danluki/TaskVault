@@ -1,8 +1,6 @@
 package taskvault
 
 import (
-	"crypto/tls"
-	"fmt"
 	"net"
 	"time"
 
@@ -11,8 +9,6 @@ import (
 )
 
 type RaftLayer struct {
-	TLSConfig *tls.Config
-
 	ln     net.Listener
 	logger *zap.SugaredLogger
 }
@@ -21,10 +17,9 @@ func NewRaftLayer(logger *zap.SugaredLogger) *RaftLayer {
 	return &RaftLayer{logger: logger}
 }
 
-func NewTLSRaftLayer(tlsConfig *tls.Config, logger *zap.SugaredLogger) *RaftLayer {
+func NewTLSRaftLayer(logger *zap.SugaredLogger) *RaftLayer {
 	return &RaftLayer{
-		TLSConfig: tlsConfig,
-		logger:    logger,
+		logger: logger,
 	}
 }
 
@@ -38,12 +33,8 @@ func (t *RaftLayer) Dial(addr raft.ServerAddress, timeout time.Duration) (net.Co
 
 	var err error
 	var conn net.Conn
-	if t.TLSConfig != nil {
-		t.logger.Debug("doing a TLS dial")
-		conn, err = tls.DialWithDialer(dialer, "tcp", string(addr), t.TLSConfig)
-	} else {
-		conn, err = dialer.Dial("tcp", string(addr))
-	}
+
+	conn, err = dialer.Dial("tcp", string(addr))
 
 	return conn, err
 }
@@ -51,8 +42,9 @@ func (t *RaftLayer) Dial(addr raft.ServerAddress, timeout time.Duration) (net.Co
 func (t *RaftLayer) Accept() (net.Conn, error) {
 	c, err := t.ln.Accept()
 	if err != nil {
-		fmt.Println("error accepting: ", err.Error())
+		t.logger.Error(err)
 	}
+
 	return c, err
 }
 
