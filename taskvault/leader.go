@@ -58,11 +58,11 @@ func (a *Agent) monitorLeadership() {
 }
 
 func (a *Agent) leaderLoop(stopCh chan struct{}) {
-	var reconcileCh chan serf.Member
+	var refreshCh chan serf.Member
 
-RECONCILE:
-	reconcileCh = nil
-	interval := time.After(a.config.ReconcileInterval)
+REFRESH:
+	refreshCh = nil
+	interval := time.After(a.config.RefreshInterval)
 
 	start := time.Now()
 	barrier := a.raft.Barrier(barrierWriteTimeout)
@@ -72,12 +72,12 @@ RECONCILE:
 	}
 	metrics.MeasureSince([]string{"taskvault", "leader", "barrier"}, start)
 
-	if err := a.reconcile(); err != nil {
+	if err := a.Refresh(); err != nil {
 		a.logger.Error("failed to ", zap.Error(err))
 		goto WAIT
 	}
 
-	reconcileCh = a.reconcileCh
+	refreshCh = a.refreshCh
 
 	select {
 	case <-stopCh:
@@ -93,37 +93,37 @@ WAIT:
 		case <-a.shutdowner:
 			return
 		case <-interval:
-			goto RECONCILE
-		case member := <-reconcileCh:
-			if err := a.reconcileMember(member); err != nil {
-				a.logger.Error("taskvault: failed to reconcile member", zap.Error(err))
+			goto REFRESH
+		case member := <-refreshCh:
+			if err := a.RefreshMember(member); err != nil {
+				a.logger.Error("taskvault: failed to Refresh member", zap.Error(err))
 			}
 		}
 	}
 }
 
-func (a *Agent) reconcile() error {
+func (a *Agent) Refresh() error {
 	defer metrics.MeasureSince(
-		[]string{"taskvault", "leader", "reconcile"}, time.Now(),
+		[]string{"taskvault", "leader", "Refresh"}, time.Now(),
 	)
 
 	members := a.serf.Members()
 	for _, member := range members {
-		if err := a.reconcileMember(member); err != nil {
+		if err := a.RefreshMember(member); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (a *Agent) reconcileMember(member serf.Member) error {
+func (a *Agent) RefreshMember(member serf.Member) error {
 	parts := toServerPart(member)
 	if parts == nil {
 		return nil
 	}
 	defer metrics.MeasureSince(
 		[]string{
-			"taskvault", "leader", "reconcileMember",
+			"taskvault", "leader", "RefreshMember",
 		}, time.Now(),
 	)
 
@@ -135,7 +135,7 @@ func (a *Agent) reconcileMember(member serf.Member) error {
 		err = a.removeRaftPeer(member, parts)
 	}
 	if err != nil {
-		a.logger.Error("failed to reconcile member", zap.Error(err), zap.Any("member", member))
+		a.logger.Error("failed to Refresh member", zap.Error(err), zap.Any("member", member))
 		return err
 	}
 	return nil

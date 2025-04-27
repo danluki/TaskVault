@@ -50,7 +50,7 @@ type Config struct {
 
 	DevMode bool
 
-	ReconcileInterval time.Duration
+	RefreshInterval time.Duration
 
 	SerfReconnectTimeout string `mapstructure:"serf-reconnect-timeout"`
 
@@ -83,7 +83,7 @@ func DefaultConfig() *Config {
 		LogLevel:             "info",
 		RPCPort:              DefaultRPCPort,
 		DataDir:              "taskvault.data",
-		ReconcileInterval:    60 * time.Second,
+		RefreshInterval:      60 * time.Second,
 		SerfReconnectTimeout: "24h",
 		UI:                   true,
 	}

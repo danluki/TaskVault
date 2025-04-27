@@ -48,7 +48,7 @@ type Agent struct {
 	raftStore     RaftStore
 	GRPCClient    TaskvaultGRPCClient
 	raftLayer     *RaftLayer
-	reconcileCh   chan serf.Member
+	refreshCh   chan serf.Member
 	GRPCServer    TaskvaultGRPCServer
 	retryJoinCh   chan error
 	leaderCh      <-chan bool
@@ -161,13 +161,13 @@ func (a *Agent) setupRaft() error {
 		logger = os.Stdout
 	}
 
-	transConfig := &raft.NetworkTransportConfig{
+	transportConfig := &raft.NetworkTransportConfig{
 		Stream:                a.raftLayer,
 		MaxPool:               3,
 		Timeout:               raftTimeout,
 		ServerAddressProvider: a.serverLookup,
 	}
-	transport := raft.NewNetworkTransportWithConfig(transConfig)
+	transport := raft.NewNetworkTransportWithConfig(transportConfig)
 	a.raftTransport = transport
 
 	config := raft.DefaultConfig()

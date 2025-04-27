@@ -153,7 +153,7 @@ func (a *Agent) reapEvent(me serf.MemberEvent) {
 			m.Status = StatusReap
 		}
 		select {
-		case a.reconcileCh <- m:
+		case a.refreshCh <- m:
 		default:
 		}
 	}
