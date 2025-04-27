@@ -144,8 +144,6 @@ func TestAgentCommand_testElection(t *testing.T) {
 	a2Addr := ip2.String()
 	defer returnFn2()
 
-	shutdownCh := make(chan struct{})
-	defer close(shutdownCh)
 
 	c := DefaultConfig()
 	c.BindAddr = a1Addr

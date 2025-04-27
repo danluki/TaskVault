@@ -150,6 +150,7 @@ func (a *Agent) Stop() error {
 
 	return nil
 }
+
 func (a *Agent) setupRaft() error {
 	if a.config.BootstrapExpect == 1 {
 		a.config.Bootstrap = true

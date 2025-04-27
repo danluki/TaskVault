@@ -278,19 +278,21 @@ func normalizeAdvertise(
 }
 
 func (c *Config) AddrParts(address string) (string, int, error) {
-	checkAddr := address
-
-START:
-	_, _, err := net.SplitHostPort(checkAddr)
-	if ae, ok := err.(*net.AddrError); ok && ae.Err == "missing port in address" {
-		checkAddr = fmt.Sprintf("%s:%d", checkAddr, DefaultBindPort)
-		goto START
-	}
+	_, _, err := net.SplitHostPort(address)
 	if err != nil {
-		return "", 0, err
+		if ae, ok := err.(*net.AddrError); ok && ae.Err == "missing port in address" {
+			address = fmt.Sprintf("%s:%d", address, DefaultBindPort)
+
+			_, _, err = net.SplitHostPort(address)
+			if err != nil {
+				return "", 0, err
+			}
+		} else {
+			return "", 0, err
+		}
 	}
 
-	addr, err := net.ResolveTCPAddr("tcp", checkAddr)
+	addr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		return "", 0, err
 	}

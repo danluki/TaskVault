@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var ShutdownCh chan (struct{})
 var agent *taskvault.Agent
 
 const (
@@ -67,8 +66,6 @@ func handleSignals() int {
 	case err := <-agent.RetryJoinCh():
 		fmt.Println("[ERR] agent: Retry join failed: ", err)
 		return 1
-	case <-ShutdownCh:
-		sig = os.Interrupt
 	}
 	fmt.Printf("Caught signal: %v", sig)
 
