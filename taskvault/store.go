@@ -2,15 +2,13 @@ package taskvault
 
 import (
 	"io"
-	"sync"
 
 	"github.com/tidwall/buntdb"
 	"go.uber.org/zap"
 )
 
 type Store struct {
-	db   *buntdb.DB
-	lock *sync.Mutex
+	db *buntdb.DB
 
 	logger *zap.SugaredLogger
 }
@@ -88,11 +86,6 @@ func (s *Store) UpdateValue(key string, value string) error {
 
 var _ SyncraStorage = (*Store)(nil)
 
-type kv struct {
-	Key   string
-	Value string
-}
-
 func NewStore(logger *zap.SugaredLogger) (*Store, error) {
 	db, err := buntdb.Open(":memory:")
 	if err != nil {
@@ -101,7 +94,6 @@ func NewStore(logger *zap.SugaredLogger) (*Store, error) {
 
 	store := &Store{
 		db:     db,
-		lock:   &sync.Mutex{},
 		logger: logger,
 	}
 

@@ -13,6 +13,8 @@ type RaftLayer struct {
 	logger *zap.SugaredLogger
 }
 
+var _ raft.StreamLayer = (*RaftLayer)(nil)
+
 func NewRaftLayer(logger *zap.SugaredLogger) *RaftLayer {
 	return &RaftLayer{logger: logger}
 }
@@ -23,9 +25,8 @@ func NewTLSRaftLayer(logger *zap.SugaredLogger) *RaftLayer {
 	}
 }
 
-func (t *RaftLayer) Open(l net.Listener) error {
+func (t *RaftLayer) Open(l net.Listener) {
 	t.ln = l
-	return nil
 }
 
 func (t *RaftLayer) Dial(addr raft.ServerAddress, timeout time.Duration) (net.Conn, error) {

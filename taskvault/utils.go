@@ -9,12 +9,6 @@ import (
 	"github.com/hashicorp/serf/serf"
 )
 
-type int64arr []int64
-
-func (a int64arr) Len() int           { return len(a) }
-func (a int64arr) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a int64arr) Less(i, j int) bool { return a[i] < a[j] }
-
 type ServerParts struct {
 	Name         string
 	ID           string
@@ -75,17 +69,14 @@ func toServerPart(m serf.Member) *ServerParts {
 		buildVersion = &version.Version{}
 	}
 
-	addr := &net.TCPAddr{IP: m.Addr, Port: port}
-	rpcAddr := &net.TCPAddr{IP: rpcIP, Port: port}
-
 	parts := &ServerParts{
 		Name:         m.Name,
 		ID:           m.Name,
 		Port:         port,
 		Bootstrap:    bootstrap,
 		Expect:       expect,
-		Addr:         addr,
-		RPCAddr:      rpcAddr,
+		Addr:         &net.TCPAddr{IP: m.Addr, Port: port},
+		RPCAddr:      &net.TCPAddr{IP: rpcIP, Port: port},
 		BuildVersion: buildVersion,
 		Status:       m.Status,
 	}

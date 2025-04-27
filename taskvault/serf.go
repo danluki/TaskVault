@@ -15,7 +15,7 @@ const (
 	maxPeerRetries = 6
 )
 
-func (a *Agent) nodeJoin(me serf.MemberEvent) {
+func (a *Agent) nodeJoin(me serf.MemberEvent, checkBootstrap bool) {
 	for _, m := range me.Members {
 		parts := toServerPart(m)
 		if parts == nil {
@@ -24,8 +24,10 @@ func (a *Agent) nodeJoin(me serf.MemberEvent) {
 
 		a.serverLookup.AddServer(parts)
 
-		if a.config.BootstrapExpect != 0 {
-			a.maybeBootstrap()
+		if checkBootstrap {
+			if a.config.BootstrapExpect != 0 {
+				a.maybeBootstrap()
+			}
 		}
 	}
 }
@@ -72,17 +74,17 @@ func (a *Agent) maybeBootstrap() {
 	for _, server := range servers {
 		var peers []string
 
-		for attempt := uint(0); attempt < maxPeerRetries; attempt++ {
+		for i := range maxPeerRetries {
 			configuration, err := a.GRPCClient.RaftGetConfiguration(server.RPCAddr.String())
 			if err != nil {
-				nextRetry := (1 << attempt) * time.Second
+				next := (1 << i) * time.Second
 				a.logger.Error(
-					"Failed to confirm peer status for server (will retry).",
+					"Failed retry.",
 					"server", server.Name,
-					"retry_interval", nextRetry.String(),
+					"retry_interval", next.String(),
 					"error", err,
 				)
-				time.Sleep(nextRetry)
+				time.Sleep(next)
 			} else {
 				for _, peer := range configuration.Servers {
 					peers = append(peers, peer.Id)
@@ -93,7 +95,7 @@ func (a *Agent) maybeBootstrap() {
 
 		if len(peers) > 0 {
 			a.logger.Info(
-				"Existing Raft peers reported by server, disabling bootstrap mode",
+				"Disabling bootstrap mode, cus of existing Raft cluster",
 				"server",
 				server.Name,
 			)
@@ -141,7 +143,7 @@ func (a *Agent) nodeFailed(me serf.MemberEvent) {
 	}
 }
 
-func (a *Agent) localMemberEvent(me serf.MemberEvent) {
+func (a *Agent) reapEvent(me serf.MemberEvent) {
 	if !a.IsLeader() {
 		return
 	}
@@ -154,18 +156,5 @@ func (a *Agent) localMemberEvent(me serf.MemberEvent) {
 		case a.reconcileCh <- m:
 		default:
 		}
-	}
-}
-
-func (a *Agent) lanNodeUpdate(me serf.MemberEvent) {
-	for _, m := range me.Members {
-		parts := toServerPart(m)
-		if parts == nil {
-			continue
-		}
-
-		a.logger.Info("Updating LAN server", zap.String("server", parts.String()))
-
-		a.serverLookup.AddServer(parts)
 	}
 }

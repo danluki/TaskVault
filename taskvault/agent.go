@@ -364,9 +364,7 @@ func (a *Agent) StartServer() {
 		a.logger.With(zap.Error(err)).Fatal("agent: RPC server failed to start")
 	}
 
-	if err := a.raftLayer.Open(raftl); err != nil {
-		a.logger.Fatal(err)
-	}
+	a.raftLayer.Open(raftl);
 
 	if err := a.setupRaft(); err != nil {
 		a.logger.With(zap.Error(err)).Fatal("agent: Raft layer failed to start")
@@ -425,22 +423,20 @@ func (a *Agent) eventLoop() {
 
 				switch e.EventType() {
 				case serf.EventMemberJoin:
-					a.nodeJoin(me)
-					a.localMemberEvent(me)
+					a.nodeJoin(me, true)
+					a.reapEvent(me)
 				case serf.EventMemberLeave, serf.EventMemberFailed:
 					a.nodeFailed(me)
-					a.localMemberEvent(me)
+					a.reapEvent(me)
 				case serf.EventMemberReap:
-					a.localMemberEvent(me)
+					a.reapEvent(me)
 				case serf.EventMemberUpdate:
-					a.lanNodeUpdate(me)
-					a.localMemberEvent(me)
-				case serf.EventUser, serf.EventQuery:
+					a.nodeJoin(me, false)
+					a.reapEvent(me)
 				default:
 					a.logger.Warn("agent: Unhandled serf event", zap.String("event", e.String()))
 				}
 			}
-
 		case <-internalShutdowner:
 			a.logger.Warn("agent: Serf shutdown detected, quitting")
 			return

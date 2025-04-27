@@ -44,7 +44,7 @@ func (grpcs *GRPCServer) Serve(lis net.Listener) error {
 	return nil
 }
 
-func Encode(t MessageType, msg interface{}) ([]byte, error) {
+func Encode(t MessageType, msg any) ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte(uint8(t))
 	m, err := proto.Marshal(msg.(proto.Message))
@@ -184,7 +184,7 @@ func (g *GRPCServer) RaftGetConfiguration(
 	reply := &types2.RaftGetConfigurationResponse{}
 	reply.Index = future.Index()
 	for _, server := range future.Configuration().Servers {
-		node := "(unknown)"
+		node := "unknown"
 		raftProtocolVersion := "unknown"
 		if member, ok := serverMap[server.Address]; ok {
 			node = member.Name
