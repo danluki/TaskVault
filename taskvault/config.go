@@ -30,11 +30,11 @@ type Config struct {
 
 	StartJoin []string `mapstructure:"join"`
 
-	RetryJoinLAN []string `mapstructure:"retry-join"`
+	RetryJoin []string `mapstructure:"retry-join"`
 
-	RetryJoinMaxAttemptsLAN int `mapstructure:"retry-max"`
+	RetryJoinMaxAttempts int `mapstructure:"retry-max"`
 
-	RetryJoinIntervalLAN time.Duration `mapstructure:"retry-interval"`
+	RetryJoinInterval time.Duration `mapstructure:"retry-interval"`
 
 	RPCPort int `mapstructure:"rpc-port"`
 

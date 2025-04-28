@@ -15,9 +15,9 @@ import (
 func (a *Agent) retryJoinLAN() {
 	r := &retryJoiner{
 		cluster:     "LAN",
-		addrs:       a.config.RetryJoinLAN,
-		maxAttempts: a.config.RetryJoinMaxAttemptsLAN,
-		interval:    a.config.RetryJoinIntervalLAN,
+		addrs:       a.config.RetryJoin,
+		maxAttempts: a.config.RetryJoinMaxAttempts,
+		interval:    a.config.RetryJoinInterval,
 		join:        a.JoinLAN,
 	}
 	if err := r.retryJoin(a.logger); err != nil {

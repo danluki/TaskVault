@@ -48,7 +48,7 @@ type Agent struct {
 	raftStore     RaftStore
 	GRPCClient    TaskvaultGRPCClient
 	raftLayer     *RaftLayer
-	refreshCh   chan serf.Member
+	refreshCh     chan serf.Member
 	GRPCServer    TaskvaultGRPCServer
 	retryJoinCh   chan error
 	leaderCh      <-chan bool
@@ -83,7 +83,7 @@ func (a *Agent) Start() error {
 		return fmt.Errorf("agent: Can not setup serf, %s", err)
 	}
 
-	if len(a.config.RetryJoinLAN) == 0 {
+	if len(a.config.RetryJoin) == 0 {
 		_, err := a.join(a.config.StartJoin, true)
 		if err != nil {
 			a.logger.With(
@@ -336,12 +336,12 @@ func (a *Agent) setupSerf() (*serf.Serf, error) {
 }
 
 func (a *Agent) StartServer() {
+	var err error
 	if a.Store == nil {
-		s, err := NewStore(a.logger)
+		a.Store, err = NewStore(a.logger)
 		if err != nil {
 			panic(err)
 		}
-		a.Store = s
 	}
 
 	a.HTTPTransport = NewTransport(a, a.logger)
@@ -365,7 +365,7 @@ func (a *Agent) StartServer() {
 		a.logger.With(zap.Error(err)).Fatal("agent: RPC server failed to start")
 	}
 
-	a.raftLayer.Open(raftl);
+	a.raftLayer.Open(raftl)
 
 	if err := a.setupRaft(); err != nil {
 		a.logger.With(zap.Error(err)).Fatal("agent: Raft layer failed to start")
