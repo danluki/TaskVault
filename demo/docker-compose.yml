@@ -7,7 +7,7 @@ services:
       - "6868:6868"
     environment:
       - GODEBUG=netdns=go
-    command: taskvault agent --server --log-level=debug --bootstrap-expect=1 --node-name=taskvault1
+    command: taskvault agent --server --retry-join=taskvault-server1:8946 --log-level=debug --bootstrap-expect=1 --node-name=taskvault1
   taskvault-server1:
     build: ..
     ports:

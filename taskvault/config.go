@@ -83,7 +83,7 @@ func DefaultConfig() *Config {
 		LogLevel:             "info",
 		RPCPort:              DefaultRPCPort,
 		DataDir:              "taskvault.data",
-		RefreshInterval:      60 * time.Second,
+		RefreshInterval:      10 * time.Second,
 		SerfReconnectTimeout: "24h",
 		UI:                   true,
 	}

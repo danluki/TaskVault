@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"testing"
 	"time"
 
@@ -296,7 +297,7 @@ func TestAgents(t *testing.T) {
 	assert.True(t, (a2.IsLeader() || a3.IsLeader()))
 	log.Println(a3.IsLeader())
 
-	// sig := make(chan os.Signal, 1)
-	// signal.Notify(sig, os.Interrupt)
-	// <-sig
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	<-sig
 }
