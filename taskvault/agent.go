@@ -56,6 +56,8 @@ type Agent struct {
 	listener      net.Listener
 
 	logger *zap.SugaredLogger
+
+	raftInmemStore *raft.InmemStore
 }
 
 func NewAgent(config *Config) *Agent {
@@ -188,6 +190,7 @@ func (a *Agent) setupRaft() error {
 		stableStore = store
 		logStore = store
 		snapshots = raft.NewDiscardSnapshotStore()
+		a.raftInmemStore = store
 	} else {
 		var err error
 

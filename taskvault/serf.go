@@ -37,6 +37,8 @@ func (a *Agent) maybeBootstrap() {
 	var err error
 	if a.raftStore != nil {
 		index, err = a.raftStore.LastIndex()
+	} else if a.raftInmemStore != nil {
+		index, err = a.raftInmemStore.LastIndex()
 	} else {
 		panic("raftStore is uninitialized")
 	}
