@@ -1,0 +1,28 @@
+services:
+  syncra1:
+    image: danluki/syncra:latest
+    ports:
+        - "8080:8080"
+        - "8946"
+        - "6868:6868"
+    environment:
+      - GODEBUG=netdns=go
+    command: syncra agent --retry-join=syncra2:8946 --log-level=debug --bootstrap-expect=1 --node-name=syncra1
+  syncra2:
+    image: danluki/syncra:latest
+    ports:
+      - "8081:8080"
+      - "8946"
+      - "6869:6868"
+    environment:
+      - GODEBUG=netdns=go
+    command: syncra agent --retry-join=syncra1:8946 --log-level=debug --bootstrap-expect=3 --node-name=syncra2
+  syncra3:
+    image: danluki/syncra:latest
+    ports:
+      - "8082:8080"
+      - "8946"
+      - "6870:6868"
+    environment:
+      - GODEBUG=netdns=go
+    command: syncra agent --retry-join=syncra2:8946 --log-level=debug --node-name=syncra3

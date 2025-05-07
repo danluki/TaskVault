@@ -9,7 +9,7 @@ services:
       - "6868:6868"
     environment:
       - GODEBUG=netdns=go
-    command: syncra agent --server --log-level=debug --bootstrap-expect=1 --node-name=taskvault1
+    command: syncra agent --retry-join=taskvault-server1:8946 --log-level=debug --bootstrap-expect=1 --node-name=taskvault1
   taskvault-server1:
     build:
       context: .
@@ -20,7 +20,7 @@ services:
       - "6869:6868"
     environment:
       - GODEBUG=netdns=go
-    command: syncra agent --server --retry-join=taskvault:8946 --log-level=debug --bootstrap-expect=3  --node-name=taskvault2 --tag server=2
+    command: syncra agent --retry-join=taskvault:8946 --log-level=debug --bootstrap-expect=3 --node-name=taskvault2 2
   taskvault-server2:
     build:
       context: .
@@ -31,5 +31,4 @@ services:
       - "6870:6868"
     environment:
       - GODEBUG=netdns=go
-    command: syncra agent --server --retry-join=taskvault:8946 --log-level=debug  --node-name=taskvault3 --tag server=2
-
+    command: syncra agent --retry-join=taskvault:8946 --log-level=debug --node-name=taskvault3
