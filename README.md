@@ -16,7 +16,11 @@ There is no Multi-Raft or multi regional support or distributed tx support and o
 probably later this README will be updated with link to repsoitory to advanced version of this core. But for now I dunno how
 to implement this to provide needed guarantees for this distributed system.
 
+You can find some helm charts in commits history and example about how to deploy this to minikube. But it's hard to maintain and probably better to
+use dkron sources for this.
+
 Also there is no client side grpc load balancing, but implementation can be found in my others repositories.
+
 
 To test locally you can use any of compose files being here. For example
 ```sh
