@@ -16,6 +16,8 @@ There is no Multi-Raft or multi regional support or distributed tx support and o
 probably later this README will be updated with link to repsoitory to advanced version of this core. But for now I dunno how
 to implement this to provide needed guarantees for this distributed system.
 
+Also there is no client side grpc load balancing, but implementation can be found in my others repositories.
+
 To test locally you can use any of compose files being here. For example
 ```sh
 docker compose -f syncra-demo.yml up -d
