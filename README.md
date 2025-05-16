@@ -1,5 +1,5 @@
 # Syncra distributed core
-The purpose of this repository is to educate how to build statefull services with Raft.
+The purpose of this repository is to educate how to build stateful services with Raft.
 It's a nice way to get started with hashicorp Raft and Serf. To understand domain I can recommend
 dkron repository(the base project for this simplified version) and Travis Jeffrey book "Distributed Services with Go".
 
